@@ -1,0 +1,156 @@
+/*
+ * CY-Market admin panel — glassmorphism skin layered on top of Filament's
+ * own compiled CSS (public/css/filament/filament/app.css). Registered via
+ * AdminPanelProvider::panel()->assets() so it loads after Filament's core
+ * styles and wins the cascade without needing to recompile Filament's
+ * Tailwind v3 theme (this app's Tailwind v4 pipeline is unrelated).
+ * Palette mirrors the storefront's emerald/amber brand tokens
+ * (resources/css/app.css) for visual consistency across panels.
+ */
+
+:root {
+    --fi-glass-bg: rgba(255, 255, 255, 0.68);
+    --fi-glass-bg-strong: rgba(255, 255, 255, 0.82);
+    --fi-glass-border: rgba(15, 23, 42, 0.08);
+    --fi-glass-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.12), 0 2px 8px -2px rgba(15, 23, 42, 0.06);
+    --fi-brand-500: #16a34a;
+    --fi-brand-600: #15803d;
+    --fi-accent-500: #f59e0b;
+}
+
+.dark {
+    --fi-glass-bg: rgba(15, 23, 26, 0.62);
+    --fi-glass-bg-strong: rgba(17, 24, 27, 0.78);
+    --fi-glass-border: rgba(255, 255, 255, 0.08);
+    --fi-glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5), 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* Ambient mesh backdrop behind the whole panel */
+.fi-body {
+    background-color: #f8faf9 !important;
+    background-image:
+        radial-gradient(at 12% 8%, rgba(220, 252, 231, 0.75) 0px, transparent 45%),
+        radial-gradient(at 90% 12%, rgba(254, 243, 199, 0.5) 0px, transparent 45%),
+        radial-gradient(at 50% 100%, rgba(240, 253, 244, 0.9) 0px, transparent 55%) !important;
+    background-attachment: fixed;
+}
+
+.dark .fi-body {
+    background-color: #08110c !important;
+    background-image:
+        radial-gradient(at 15% 10%, rgba(21, 128, 61, 0.28) 0px, transparent 50%),
+        radial-gradient(at 85% 15%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(5, 35, 18, 0.9) 0px, transparent 60%) !important;
+    background-attachment: fixed;
+}
+
+/* Sidebar */
+.fi-sidebar {
+    background: var(--fi-glass-bg) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-inline-end: 1px solid var(--fi-glass-border);
+    box-shadow: none !important;
+}
+
+.fi-sidebar-header {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid var(--fi-glass-border);
+}
+
+.fi-sidebar-item-button {
+    border-radius: 0.75rem;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-button {
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.14), rgba(245, 158, 11, 0.1)) !important;
+    box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.25);
+}
+
+/* Topbar */
+.fi-topbar > nav {
+    background: var(--fi-glass-bg) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: none !important;
+    border-bottom: 1px solid var(--fi-glass-border);
+}
+
+/* Main content gutter — evenly spaced rhythm */
+.fi-main {
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+}
+
+.fi-page {
+    row-gap: 1.75rem;
+}
+
+.fi-header-heading {
+    letter-spacing: -0.01em;
+}
+
+/* Cards: stats, tables, sections. Note: deliberately excludes `.fi-wi`
+   (the outer widgets grid) — nested backdrop-filter blur on both an
+   ancestor and its child card causes headless Chromium to composite the
+   child's content as blank white, so only leaf-level cards get the blur. */
+.fi-wi-stats-overview-stat,
+.fi-ta-ctn,
+.fi-section,
+.fi-in-ctn {
+    background: var(--fi-glass-bg-strong) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--fi-glass-border) !important;
+    box-shadow: var(--fi-glass-shadow) !important;
+    border-radius: 1rem !important;
+}
+
+.fi-wi-stats-overview-stat {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.fi-wi-stats-overview-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px -14px rgba(15, 23, 42, 0.18), 0 4px 10px -4px rgba(15, 23, 42, 0.08) !important;
+}
+
+.fi-wi-stats-overview-stats {
+    gap: 1.25rem !important;
+}
+
+/* Table rows: subtle translucency instead of flat white */
+.fi-ta-row {
+    background: transparent !important;
+}
+
+.fi-ta-row:hover {
+    background: rgba(22, 163, 74, 0.05) !important;
+}
+
+/* Primary buttons get the brand glow */
+.fi-btn.fi-color-primary,
+.fi-ac-btn-action.fi-color-primary {
+    box-shadow: 0 6px 18px -6px rgba(22, 163, 74, 0.45) !important;
+}
+
+/* Modals and dropdowns: same glass language */
+.fi-modal-window,
+.fi-dropdown-panel {
+    background: var(--fi-glass-bg-strong) !important;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--fi-glass-border) !important;
+}
+
+/* Slimmer, quieter scrollbars inside the glass sidebar */
+.fi-sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fi-sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(22, 163, 74, 0.25);
+    border-radius: 999px;
+}

@@ -1,0 +1,238 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Refined modern farm-fresh emerald & forest palette */
+    --color-brand-50: #f0fdf4;
+    --color-brand-100: #dcfce7;
+    --color-brand-200: #bbf7d0;
+    --color-brand-300: #86efac;
+    --color-brand-400: #4ade80;
+    --color-brand-500: #16a34a;
+    --color-brand-600: #15803d;
+    --color-brand-700: #166534;
+    --color-brand-800: #14532d;
+    --color-brand-900: #0b381e;
+    --color-brand-950: #052312;
+
+    /* Harvest Gold / Warm Amber Accent */
+    --color-accent-50: #fffbeb;
+    --color-accent-100: #fef3c7;
+    --color-accent-200: #fde68a;
+    --color-accent-300: #fcd34d;
+    --color-accent-400: #fbbf24;
+    --color-accent-500: #f59e0b;
+    --color-accent-600: #d97706;
+    --color-accent-700: #b45309;
+
+    /* Slate & Pearl Neutral Tint */
+    --color-surface-50: #f8faf9;
+    --color-surface-100: #f0f4f2;
+    --color-surface-200: #e3ebe7;
+}
+
+@layer utilities {
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Glassmorphism primitives */
+    .glass-surface {
+        background: rgba(255, 255, 255, 0.78);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    .glass-surface-subtle {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.45);
+    }
+
+    /* `background-color` (not the `background` shorthand) and an inset
+       box-shadow ring (not the `border` property) so these compose safely
+       with Tailwind utilities already in the markup - a `bg-gradient-to-br`
+       or `border-brand-100` on the same element keeps working instead of
+       being clobbered by this class. */
+    .glass-card {
+        position: relative;
+        background-color: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8),
+            0 12px 32px -12px rgba(15, 23, 42, 0.12),
+            0 2px 6px -2px rgba(15, 23, 42, 0.04);
+    }
+
+    .glass-dark {
+        background-color: rgba(8, 46, 30, 0.6);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-dark-card {
+        background-color: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* ===================================================================
+       Liquid Glass — an iOS 26 ("Liquid Glass") inspired system: frosted,
+       vibrant, buoyant surfaces with a bright specular edge that catches
+       light like real glass, floating over an ambient colour mesh instead
+       of flat opaque panels. Same background-color + inset-ring technique
+       as .glass-card above, so Tailwind utilities on the same element
+       (gradients, tinted borders) keep working underneath.
+       =================================================================== */
+    :root {
+        --liquid-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .liquid-glass {
+        position: relative;
+        background-color: rgba(255, 255, 255, 0.58);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.85),
+            0 16px 40px -16px rgba(15, 23, 42, 0.14),
+            0 2px 8px -2px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Higher-opacity variant for dense/long text content that needs more
+       contrast to stay legible while still reading as translucent glass. */
+    .liquid-glass-strong {
+        position: relative;
+        background-color: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            0 16px 40px -16px rgba(15, 23, 42, 0.12),
+            0 2px 8px -2px rgba(15, 23, 42, 0.04);
+    }
+
+    /* Translucent white-on-dark, for glass surfaces sitting over the
+       brand-dark hero/footer sections. */
+    .liquid-glass-dark {
+        position: relative;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(24px) saturate(160%);
+        -webkit-backdrop-filter: blur(24px) saturate(160%);
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.16),
+            0 16px 40px -16px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Floating pill/bar surface for navigation chrome. */
+    .liquid-nav {
+        position: relative;
+        background-color: rgba(255, 255, 255, 0.68);
+        backdrop-filter: blur(32px) saturate(180%);
+        -webkit-backdrop-filter: blur(32px) saturate(180%);
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            0 10px 30px -8px rgba(15, 23, 42, 0.16);
+    }
+
+    /* Frosted form field - pairs with a plain `rounded-*` utility. */
+    .liquid-input {
+        background-color: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .liquid-input:focus {
+        background-color: rgba(255, 255, 255, 0.95);
+        box-shadow: inset 0 0 0 1.5px var(--color-brand-500, #16a34a);
+    }
+
+    /* Tactile press feedback for glass buttons/cards/pills - the
+       "buoyant" feel of Liquid Glass controls responding to touch. */
+    .liquid-tap {
+        transition: transform 0.35s var(--liquid-ease), box-shadow 0.35s var(--liquid-ease);
+    }
+
+    .liquid-tap:active {
+        transform: scale(0.96);
+    }
+
+    /* Persistent ambient colour mesh - apply to <body> so every glass
+       surface across every page has something vibrant to refract, instead
+       of a flat white background breaking the illusion once you scroll
+       past the hero. */
+    .liquid-body-mesh {
+        background-color: #f7faf8;
+        background-image:
+            radial-gradient(at 6% 8%, rgba(220, 252, 231, 0.9) 0px, transparent 40%),
+            radial-gradient(at 94% 12%, rgba(254, 243, 199, 0.55) 0px, transparent 40%),
+            radial-gradient(at 15% 55%, rgba(187, 247, 208, 0.45) 0px, transparent 42%),
+            radial-gradient(at 88% 60%, rgba(253, 230, 138, 0.35) 0px, transparent 42%),
+            radial-gradient(at 30% 95%, rgba(167, 243, 208, 0.5) 0px, transparent 45%),
+            radial-gradient(at 90% 98%, rgba(252, 211, 77, 0.3) 0px, transparent 45%);
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+    }
+
+    .glow-brand-sm {
+        box-shadow: 0 0 20px -5px rgba(22, 163, 74, 0.35);
+    }
+
+    .glow-brand-md {
+        box-shadow: 0 0 35px -5px rgba(22, 163, 74, 0.45);
+    }
+
+    .glow-accent-sm {
+        box-shadow: 0 0 20px -5px rgba(245, 158, 11, 0.35);
+    }
+
+    /* Ambient background mesh */
+    .bg-mesh-radial {
+        background-image: 
+            radial-gradient(at 15% 15%, rgba(220, 252, 231, 0.65) 0px, transparent 50%),
+            radial-gradient(at 85% 20%, rgba(254, 243, 199, 0.45) 0px, transparent 50%),
+            radial-gradient(at 50% 80%, rgba(240, 253, 244, 0.8) 0px, transparent 50%);
+    }
+
+    .bg-mesh-dark {
+        background-image:
+            radial-gradient(at 20% 20%, rgba(21, 128, 61, 0.35) 0px, transparent 50%),
+            radial-gradient(at 80% 30%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
+            radial-gradient(at 50% 90%, rgba(5, 35, 18, 0.8) 0px, transparent 60%);
+    }
+}
