@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ReportExportController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -88,3 +89,14 @@ Route::middleware('storefront')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::post('/webhooks/hubtel', [HubtelWebhookController::class, 'handle'])->name('webhooks.hubtel');
+
+/*
+|--------------------------------------------------------------------------
+| Admin report exports (TOR §6.11 "export capability"). Lives outside the
+| Filament panel's own routing since it streams a file rather than
+| rendering a Livewire page; RBAC is enforced inside the controller.
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')
+    ->get('/admin/reports/export/{report}', ReportExportController::class)
+    ->name('admin.reports.export');

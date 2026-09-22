@@ -154,3 +154,296 @@
     background: rgba(22, 163, 74, 0.25);
     border-radius: 999px;
 }
+
+/*
+ * Reports page layout (resources/views/filament/pages/reports.blade.php).
+ * Filament's prebuilt CSS only contains the Tailwind utilities Filament
+ * itself uses, so responsive grid utilities such as lg:grid-cols-3 are
+ * absent - these purpose-built classes give the report KPI cards and
+ * tables a layout that adapts from phone to desktop without a build step.
+ */
+.cy-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 0.75rem;
+}
+
+.cy-kpis-tight {
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+}
+
+.cy-kpi {
+    border-radius: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    box-shadow: inset 0 0 0 1px var(--fi-glass-border);
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.dark .cy-kpi {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.cy-kpi-label {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: rgb(107 114 128);
+}
+
+.cy-kpi-value {
+    margin-top: 0.15rem;
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    font-weight: 600;
+    color: rgb(3 7 18);
+}
+
+.dark .cy-kpi-label {
+    color: rgb(156 163 175);
+}
+
+.dark .cy-kpi-value {
+    color: #fff;
+}
+
+.cy-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.cy-h4 {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(3 7 18);
+}
+
+.dark .cy-h4 {
+    color: #fff;
+}
+
+.cy-spaced {
+    margin-top: 1.5rem;
+}
+
+.cy-note {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: rgb(107 114 128);
+}
+
+.dark .cy-note {
+    color: rgb(156 163 175);
+}
+
+.cy-muted {
+    font-weight: 400;
+    color: rgb(107 114 128);
+}
+
+.dark .cy-muted {
+    color: rgb(156 163 175);
+}
+
+.cy-table-wrap {
+    max-height: 26rem;
+    overflow: auto;
+}
+
+.cy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.cy-table th {
+    position: sticky;
+    top: 0;
+    padding-bottom: 0.3rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgb(107 114 128);
+    background: var(--fi-glass-bg-strong);
+}
+
+.dark .cy-table th {
+    color: rgb(156 163 175);
+}
+
+.cy-table td {
+    padding: 0.3rem 0.5rem 0.3rem 0;
+    border-top: 1px solid var(--fi-glass-border);
+    vertical-align: top;
+}
+
+.cy-table .r {
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 0;
+}
+
+.cy-table td.cy-empty {
+    color: rgb(156 163 175);
+}
+
+/* Keep a left-aligned column that follows a right-aligned figure (e.g. a
+   "Note" after "Qty") from running into it. */
+.cy-table th.r + th,
+.cy-table td.r + td {
+    padding-left: 0.85rem;
+}
+
+/*
+ * Reports hub + detail pages (app/Filament/Pages/Reports*.php).
+ */
+.cy-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgb(107 114 128);
+    text-decoration: none;
+    margin-bottom: 0.25rem;
+}
+
+.cy-back-link:hover {
+    color: var(--fi-brand-600);
+}
+
+.dark .cy-back-link {
+    color: rgb(156 163 175);
+}
+
+.cy-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cy-filter-form {
+    flex: 1 1 20rem;
+}
+
+/* Report hub: grid of report-type cards */
+.cy-report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 1.25rem;
+}
+
+.cy-report-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    text-decoration: none;
+    background: var(--fi-glass-bg-strong);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: var(--fi-glass-shadow);
+    border: 1px solid var(--fi-glass-border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cy-report-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px -16px rgba(15, 23, 42, 0.22), 0 6px 12px -4px rgba(15, 23, 42, 0.1);
+}
+
+.cy-report-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.85rem;
+    box-shadow: 0 6px 16px -6px rgba(15, 23, 42, 0.35);
+}
+
+.cy-badge-emerald {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.cy-badge-amber {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.cy-badge-sky {
+    background: linear-gradient(135deg, #0ea5e9, #0369a1);
+}
+
+.cy-badge-violet {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+.cy-report-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgb(3 7 18);
+}
+
+.dark .cy-report-card-title {
+    color: #fff;
+}
+
+.cy-report-card-desc {
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: rgb(107 114 128);
+}
+
+.dark .cy-report-card-desc {
+    color: rgb(156 163 175);
+}
+
+.cy-report-card-stat {
+    margin-top: auto;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--fi-glass-border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.cy-report-card-stat-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: rgb(3 7 18);
+}
+
+.dark .cy-report-card-stat-value {
+    color: #fff;
+}
+
+.cy-report-card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--fi-brand-600);
+}
+
+.cy-report-card:hover .cy-report-card-cta {
+    color: var(--fi-brand-500);
+}
+
+.dark .cy-report-card-cta {
+    color: #4ade80;
+}
+
+/* Vertical stack of sections inside a .cy-cols grid cell (e.g. pairing a
+   wide + narrow table together rather than giving them equal grid width). */
+.cy-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}

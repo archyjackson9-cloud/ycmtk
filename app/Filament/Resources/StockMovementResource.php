@@ -55,6 +55,7 @@ class StockMovementResource extends Resource
             Forms\Components\Select::make('product_id')
                 ->label('Product')
                 ->options(fn () => Product::orderBy('name')->pluck('name', 'id'))
+                ->default(fn () => request()->query('product_id'))
                 ->searchable()
                 ->required(),
             Forms\Components\TextInput::make('delta')

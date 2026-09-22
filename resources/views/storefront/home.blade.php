@@ -4,118 +4,95 @@
 
 @section('content')
 
-    {{-- Hero Section with Ambient Glassmorphism --}}
+    {{-- Hero Section - editable via Admin > Marketing > Banners --}}
+    @php($banner = $heroBanners->first())
     <section class="relative bg-gradient-to-br from-brand-950 via-[#072f1b] to-emerald-950 text-white overflow-hidden">
+        {{-- Background Media (image or video), sitting behind everything else --}}
+        @if($banner?->hasVideo())
+            <video src="{{ $banner->videoUrl() }}" class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline
+                   @if($banner->imageUrl()) poster="{{ $banner->imageUrl() }}" @endif>
+            </video>
+        @elseif($banner?->imageUrl())
+            <img src="{{ $banner->imageUrl() }}" alt="" class="absolute inset-0 w-full h-full object-cover" aria-hidden="true">
+        @endif
+
+        {{-- Dark scrim so text stays legible over any background media --}}
+        <div class="absolute inset-0 bg-gradient-to-br from-brand-950/90 via-[#072f1b]/85 to-emerald-950/90"></div>
+
         {{-- Ambient Glow Orbs --}}
         <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute top-1/2 -right-40 w-96 h-96 bg-accent-500/15 rounded-full blur-3xl pointer-events-none"></div>
-        
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 relative z-10">
-            @if($heroBanners->isNotEmpty())
-                @php($banner = $heroBanners->first())
-                <div class="grid lg:grid-cols-2 gap-12 items-center">
-                    <div class="space-y-6">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full backdrop-blur-md bg-white/10 border border-white/20 text-emerald-300 text-xs font-semibold">
-                            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span>Direct Harvest • {{ config('cymarket.pilot_zone_name') }}</span>
-                        </div>
-                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1]">
-                            {{ $banner->title }}
-                        </h1>
-                        @if($banner->link_url)
-                            <div class="pt-2">
-                                <a href="{{ $banner->link_url }}" 
-                                   class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-brand-600 hover:from-emerald-600 hover:to-brand-700 text-white font-bold px-8 py-3.5 rounded-full shadow-lg shadow-emerald-950/30 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all">
-                                    <span>Explore Collection</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                                </a>
-                            </div>
-                        @endif
+            <div class="grid lg:grid-cols-12 gap-12 items-center">
+                {{-- Left Editorial Headline --}}
+                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
+                        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Single-Seller Farm Direct • {{ config('cymarket.pilot_zone_name') }}</span>
                     </div>
-                    <div class="relative">
-                        <div class="rounded-3xl overflow-hidden border border-white/20 shadow-2xl shadow-black/40">
-                            @if($banner->hasVideo())
-                                <video src="{{ $banner->videoUrl() }}" class="w-full h-full aspect-video object-cover" autoplay muted loop playsinline
-                                       @if($banner->imageUrl()) poster="{{ $banner->imageUrl() }}" @endif>
-                                </video>
-                            @else
-                                <img src="{{ $banner->imageUrl() }}" alt="{{ $banner->title }}" class="w-full h-auto object-cover">
-                            @endif
-                        </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
+                        {{ $banner->title ?? 'Farm-Fresh Harvest, Delivered to Your Door.' }}
+                    </h1>
+
+                    <p class="text-base sm:text-lg text-emerald-100/80 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
+                        {{ $banner->subtitle ?? 'Every fruit, vegetable, and grain on CY-Market is harvested directly from our own certified farms. No third-party middlemen — only genuine farm-fresh goodness.' }}
+                    </p>
+
+                    <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                        <a href="{{ $banner->link_url ?? route('products.index') }}"
+                           class="inline-flex items-center gap-2.5 bg-gradient-to-r from-emerald-500 to-brand-600 hover:from-emerald-600 hover:to-brand-700 text-white font-bold px-7 py-3.5 rounded-full shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 hover:-translate-y-0.5 transition-all">
+                            <span>{{ $banner->cta_label ?? 'Shop Fresh Produce' }}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </a>
+                        <a href="{{ route('orders.track-form') }}"
+                           class="inline-flex items-center gap-2 backdrop-blur-md bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-6 py-3.5 rounded-full transition-all">
+                            <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <span>Track an Order</span>
+                        </a>
                     </div>
                 </div>
-            @else
-                <div class="grid lg:grid-cols-12 gap-12 items-center">
-                    {{-- Left Editorial Headline --}}
-                    <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
-                            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span>Single-Seller Farm Direct • {{ config('cymarket.pilot_zone_name') }}</span>
+
+                {{-- Right 4 Glass Feature Tiles --}}
+                <div class="lg:col-span-5 grid grid-cols-2 gap-3.5">
+                    <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
+                        <div class="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         </div>
-                        
-                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
-                            Farm-Fresh Harvest, <br class="hidden sm:inline">
-                            <span class="bg-gradient-to-r from-emerald-300 via-emerald-100 to-amber-200 bg-clip-text text-transparent">Delivered to Your Door.</span>
-                        </h1>
-                        
-                        <p class="text-base sm:text-lg text-emerald-100/80 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
-                            Every fruit, vegetable, and grain on CY-Market is harvested directly from our own certified farms. No third-party middlemen — only genuine farm-fresh goodness.
-                        </p>
-                        
-                        <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                            <a href="{{ route('products.index') }}" 
-                               class="inline-flex items-center gap-2.5 bg-gradient-to-r from-emerald-500 to-brand-600 hover:from-emerald-600 hover:to-brand-700 text-white font-bold px-7 py-3.5 rounded-full shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 hover:-translate-y-0.5 transition-all">
-                                <span>Shop Fresh Produce</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                            </a>
-                            <a href="{{ route('orders.track-form') }}" 
-                               class="inline-flex items-center gap-2 backdrop-blur-md bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-6 py-3.5 rounded-full transition-all">
-                                <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                                <span>Track an Order</span>
-                            </a>
-                        </div>
+                        <p class="text-2xl font-black text-white">100%</p>
+                        <p class="text-xs font-bold text-emerald-200 mt-0.5">Farm Grown</p>
+                        <p class="text-[11px] text-emerald-100/70 mt-1">Directly from our own fields, zero middlemen</p>
                     </div>
 
-                    {{-- Right 4 Glass Feature Tiles --}}
-                    <div class="lg:col-span-5 grid grid-cols-2 gap-3.5">
-                        <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
-                            <div class="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 mb-3 group-hover:scale-110 transition-transform">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </div>
-                            <p class="text-2xl font-black text-white">100%</p>
-                            <p class="text-xs font-bold text-emerald-200 mt-0.5">Farm Grown</p>
-                            <p class="text-[11px] text-emerald-100/70 mt-1">Directly from our own fields, zero middlemen</p>
+                    <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
+                        <div class="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-accent-400 mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         </div>
+                        <p class="text-2xl font-black text-white">Hubtel MoMo</p>
+                        <p class="text-xs font-bold text-amber-200 mt-0.5">Instant Checkout</p>
+                        <p class="text-[11px] text-emerald-100/70 mt-1">Protected Mobile Money & Card payment</p>
+                    </div>
 
-                        <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
-                            <div class="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-accent-400 mb-3 group-hover:scale-110 transition-transform">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                            </div>
-                            <p class="text-2xl font-black text-white">Hubtel MoMo</p>
-                            <p class="text-xs font-bold text-amber-200 mt-0.5">Instant Checkout</p>
-                            <p class="text-[11px] text-emerald-100/70 mt-1">Protected Mobile Money & Card payment</p>
+                    <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
+                        <div class="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         </div>
+                        <p class="text-2xl font-black text-white">Live SMS</p>
+                        <p class="text-xs font-bold text-emerald-200 mt-0.5">Status Updates</p>
+                        <p class="text-[11px] text-emerald-100/70 mt-1">Automatic alert at dispatch and delivery</p>
+                    </div>
 
-                        <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
-                            <div class="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 mb-3 group-hover:scale-110 transition-transform">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                            </div>
-                            <p class="text-2xl font-black text-white">Live SMS</p>
-                            <p class="text-xs font-bold text-emerald-200 mt-0.5">Status Updates</p>
-                            <p class="text-[11px] text-emerald-100/70 mt-1">Automatic alert at dispatch and delivery</p>
+                    <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
+                        <div class="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                         </div>
-
-                        <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">
-                            <div class="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 mb-3 group-hover:scale-110 transition-transform">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                            </div>
-                            <p class="text-2xl font-black text-white">Fast Delivery</p>
-                            <p class="text-xs font-bold text-emerald-200 mt-0.5">Pilot Guaranteed</p>
-                            <p class="text-[11px] text-emerald-100/70 mt-1">Cold-packed and dispatched promptly</p>
-                        </div>
+                        <p class="text-2xl font-black text-white">Fast Delivery</p>
+                        <p class="text-xs font-bold text-emerald-200 mt-0.5">Pilot Guaranteed</p>
+                        <p class="text-[11px] text-emerald-100/70 mt-1">Cold-packed and dispatched promptly</p>
                     </div>
                 </div>
-            @endif
+            </div>
         </div>
     </section>
 

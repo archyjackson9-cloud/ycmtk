@@ -18,6 +18,12 @@ class SalesChartWidget extends ChartWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    /** Revenue is a financial report - Super Admin only (TOR §6.10). */
+    public static function canView(): bool
+    {
+        return auth()->user()?->isSuperAdmin() ?? false;
+    }
+
     protected function getData(): array
     {
         $rows = app(ReportingService::class)->salesByDay(14);

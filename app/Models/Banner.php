@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class Banner extends Model
 {
     protected $fillable = [
-        'title', 'image', 'video', 'link_url', 'position', 'sort_order', 'is_active',
+        'title', 'subtitle', 'image', 'video', 'link_url', 'cta_label', 'position', 'sort_order', 'is_active',
         'starts_at', 'expires_at',
     ];
 

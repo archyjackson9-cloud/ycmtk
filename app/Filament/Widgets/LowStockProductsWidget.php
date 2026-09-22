@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\StockMovementResource;
 use App\Models\Product;
 use App\Services\ReportingService;
 use Filament\Tables;
@@ -22,6 +22,15 @@ class LowStockProductsWidget extends BaseWidget
 
     protected static ?string $heading = 'Low Stock Products';
 
+    /** Inventory reports: Super Admin and Inventory Officer (TOR §6.10). */
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasAnyRole([
+            config('cymarket.roles.super_admin'),
+            config('cymarket.roles.inventory_officer'),
+        ]) ?? false;
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -39,9 +48,12 @@ class LowStockProductsWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('unit_of_measurement')->label('Unit'),
             ])
             ->actions([
-                Tables\Actions\Action::make('viewProduct')
+                // Stock is adjusted through an audited stock movement, which
+                // both Super Admin and Inventory Officer may create; product
+                // editing is Super Admin only, so linking there would 403.
+                Tables\Actions\Action::make('restock')
                     ->label('Restock')
-                    ->url(fn (Product $record) => ProductResource::getUrl('edit', ['record' => $record]))
+                    ->url(fn (Product $record) => StockMovementResource::getUrl('create', ['product_id' => $record->id]))
                     ->icon('heroicon-o-arrow-path'),
             ])
             ->paginated(false);

@@ -37,15 +37,19 @@ class BannerResource extends Resource
                 ->columns(2)
                 ->schema([
                     Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
+                    Forms\Components\Textarea::make('subtitle')->rows(2)->maxLength(500)->columnSpanFull()
+                        ->helperText('Supporting line shown under the headline.'),
                     Forms\Components\FileUpload::make('image')
                         ->image()
                         ->directory('banners')
-                        ->helperText('Used as the hero image, or as the video poster frame if a video is also set.'),
+                        ->helperText('Shown as a full-bleed background behind the hero text, or as the video poster frame if a video is also set.'),
                     Forms\Components\FileUpload::make('video')
                         ->directory('banners')
                         ->acceptedFileTypes(['video/mp4', 'video/webm'])
-                        ->helperText('Optional. Autoplays muted and looped in the hero - keep it short (a few seconds) and under a few MB.'),
-                    Forms\Components\TextInput::make('link_url')->label('Link URL')->url()->maxLength(255),
+                        ->helperText('Optional. Autoplays muted and looped as the hero background - keep it short (a few seconds) and under a few MB.'),
+                    Forms\Components\TextInput::make('cta_label')->label('Button label')->maxLength(100)->default('Shop Fresh Produce'),
+                    Forms\Components\TextInput::make('link_url')->label('Button link URL')->url()->maxLength(255)
+                        ->helperText('Where the hero button goes, e.g. '.url('/shop')),
                     Forms\Components\Select::make('position')
                         ->options([
                             'homepage_hero' => 'Homepage Hero',
