@@ -108,7 +108,11 @@
                                class="w-full rounded-2xl liquid-input text-xs px-3.5 py-2.5 focus:outline-none">
                     </div>
                     <div>
-                        @include('partials.location-picker', ['mapId' => 'account-address-map'])
+                        @include('partials.location-picker', [
+                            'mapId' => 'account-address-map',
+                            'label' => 'Pin Delivery Location',
+                            'helpText' => 'Drop a pin so riders can find this address precisely - optional but helpful.',
+                        ])
                     </div>
                     <div>
                         <label class="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">

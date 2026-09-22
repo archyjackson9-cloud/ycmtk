@@ -101,7 +101,21 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </div>
                         </div>
-                        <p class="text-[11px] text-gray-400 mt-1">Direct harvest deliveries across {{ config('cymarket.pilot_zone_name') }}.</p>
+                        <p class="text-[11px] text-gray-400 mt-1">Pick the zone closest to you, or skip this and pin your exact location below instead.</p>
+                    </div>
+
+                    {{-- Geo Location Picker - the alternative to picking a zone above --}}
+                    <div class="sm:col-span-2 relative">
+                        <div class="flex items-center gap-3 -mt-1 mb-1">
+                            <span class="h-px flex-1 bg-gray-200"></span>
+                            <span class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">Or</span>
+                            <span class="h-px flex-1 bg-gray-200"></span>
+                        </div>
+                        @include('partials.location-picker', [
+                            'mapId' => 'checkout-map',
+                            'initialLat' => old('latitude', $defaultAddress->latitude ?? null),
+                            'initialLng' => old('longitude', $defaultAddress->longitude ?? null),
+                        ])
                     </div>
 
                     {{-- Address Line --}}
@@ -118,15 +132,6 @@
                         <input type="text" name="landmark" value="{{ old('landmark', $defaultAddress->landmark ?? '') }}"
                                placeholder="e.g. Near Tarkwa UMaT Main Gate, opposite Shell station"
                                class="w-full rounded-2xl liquid-input text-xs px-3.5 py-2.5 focus:outline-none">
-                    </div>
-
-                    {{-- Geo Location Picker --}}
-                    <div class="sm:col-span-2">
-                        @include('partials.location-picker', [
-                            'mapId' => 'checkout-map',
-                            'initialLat' => old('latitude', $defaultAddress->latitude ?? null),
-                            'initialLng' => old('longitude', $defaultAddress->longitude ?? null),
-                        ])
                     </div>
 
                     {{-- Notes --}}

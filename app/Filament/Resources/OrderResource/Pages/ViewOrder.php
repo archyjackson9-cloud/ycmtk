@@ -6,6 +6,7 @@ use App\Filament\Resources\OrderResource;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -41,6 +42,16 @@ class ViewOrder extends ViewRecord
                     TextEntry::make('delivery_landmark')->label('Landmark')->visible(fn ($record) => filled($record->delivery_landmark)),
                     TextEntry::make('deliveryZone.name')->label('Delivery zone'),
                     TextEntry::make('notes')->label('Customer notes')->visible(fn ($record) => filled($record->notes)),
+                ]),
+
+            Section::make('Delivery Location')
+                ->description('Where the customer pinned their current location, so a rider can go straight to it.')
+                ->visible(fn ($record) => filled($record->delivery_latitude) && filled($record->delivery_longitude))
+                ->schema([
+                    ViewEntry::make('deliveryLocationMap')
+                        ->label('')
+                        ->view('filament.infolists.delivery-location-map')
+                        ->columnSpanFull(),
                 ]),
 
             Section::make('Items')

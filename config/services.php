@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    /*
+    | Maps JavaScript API key (with billing enabled) for the storefront
+    | delivery-location picker and the admin order-location map. Get one
+    | at https://console.cloud.google.com/google/maps-apis - the picker
+    | and map show a "not configured" notice instead of loading Google's
+    | script when this is blank.
+    */
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];
