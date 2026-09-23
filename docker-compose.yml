@@ -1,5 +1,8 @@
 version: "3.8"
 
+# The app image is prebuilt and published to GitHub Container Registry by
+# .github/workflows/docker-publish.yml (Docker Manager cannot build from source).
+#
 # Every variable below is declared explicitly per service (rather than a
 # single `env_file: .env` reference, and without YAML anchors/merge keys)
 # on purpose - both are compatibility risks with third-party compose
@@ -15,9 +18,7 @@ version: "3.8"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${APP_IMAGE:-ghcr.io/archyjackson9-cloud/ycmtk:latest}
     restart: unless-stopped
     ports:
       - "${APP_PORT:-80}:80"
@@ -93,9 +94,7 @@ services:
   # Same image as `app`, just running Laravel's scheduler loop instead of
   # Apache (TOR §11 - expired reservations, abandoned carts, stale orders).
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${APP_IMAGE:-ghcr.io/archyjackson9-cloud/ycmtk:latest}
     restart: unless-stopped
     command: ["/usr/local/bin/scheduler.sh"]
     environment:
@@ -172,9 +171,7 @@ services:
   # changes rather than something load-bearing today. Remove this service
   # if you'd rather not run it until it's actually needed.
   queue:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${APP_IMAGE:-ghcr.io/archyjackson9-cloud/ycmtk:latest}
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=10", "--sleep=3"]
     environment:

@@ -13,7 +13,7 @@ RUN composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \n    --ignore-platform-reqs
 
 # ---------------------------------------------------------------------------
 # Stage 2: frontend build (Tailwind v4 + Vite, storefront + admin glass CSS).
