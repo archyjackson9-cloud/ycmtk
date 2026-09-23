@@ -231,7 +231,7 @@
 
     .bg-mesh-dark {
         background-image:
-            radial-gradient(at 20% 20%, rgba(21, 128, 61, 0.35) 0px, transparent 50%),
+            radial-gradient(at 20% 20%, rgba(32, 111, 61, 0.35) 0px, transparent 50%),
             radial-gradient(at 80% 30%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
             radial-gradient(at 50% 90%, rgba(5, 35, 18, 0.8) 0px, transparent 60%);
     }

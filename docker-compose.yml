@@ -1,0 +1,71 @@
+name: cy-market
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Same image as `app`, just running Laravel's scheduler loop instead of
+  # Apache (TOR §11 - expired reservations, abandoned carts, stale orders).
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["/usr/local/bin/scheduler.sh"]
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # No jobs are dispatched onto the queue yet (everything in this app runs
+  # synchronously), so this is a cheap, idle safety net for when that
+  # changes rather than something load-bearing today. Remove this service
+  # if you'd rather not run it until it's actually needed.
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=10", "--sleep=3"]
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  app-storage:
+  db-data:
