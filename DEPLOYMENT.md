@@ -21,6 +21,26 @@ point-and-click equivalent for a step, use whichever you prefer.
 | `docker/scheduler.sh` | The loop the `scheduler` service runs instead of a real cron daemon |
 | `.dockerignore` | Keeps `vendor/`, `node_modules/`, `.env`, and `.git` out of the image |
 
+## Two ways to deploy
+
+**A) Hostinger's "Docker Manager > Compose" URL-paste tool.** Point it at
+this repo's URL and it clones + runs `docker compose up` for you. Every
+setting in `docker-compose.yml` reads from an env var with a safe fallback
+(`${DB_PASSWORD:-change-me}` etc.) rather than requiring a committed `.env`
+file, specifically so this works on a fresh clone with nothing configured
+yet. If the panel exposes an environment-variables form before/after
+deploying, that's where to override the fallbacks with real values (see the
+table in step 3 for the full list). If it doesn't, SSH in afterwards, drop a
+real `.env` next to `docker-compose.yml` (step 3 below), and run
+`docker compose up -d --build` again to pick it up.
+
+**B) Plain SSH.** Steps 1–8 below, using `docker compose` directly. This is
+the more predictable path since it doesn't depend on how any particular
+panel's importer parses the compose file - if the Hostinger UI is fighting
+you (e.g. a "Docker project not found" error, which usually means its
+importer choked on something before ever running Compose), fall back to
+this and come back to the UI later once the app is confirmed running.
+
 ## 1. Point your domain at the VPS
 
 Create an `A` record for your domain pointing at the VPS's public IP. This
