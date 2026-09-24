@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind the Caddy reverse proxy: trust its X-Forwarded-* headers so
+        // Laravel sees the original https scheme/host (URLs, secure cookies).
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'storefront' => ShareStorefrontData::class,
         ]);

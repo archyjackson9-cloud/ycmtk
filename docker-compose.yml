@@ -1,4 +1,3 @@
-version: "3.8"
 
 # The app image is prebuilt and published to GitHub Container Registry by
 # .github/workflows/docker-publish.yml (Docker Manager cannot build from source).
@@ -20,8 +19,8 @@ services:
   app:
     image: ${APP_IMAGE:-ghcr.io/archyjackson9-cloud/ycmtk:latest}
     restart: unless-stopped
-    ports:
-      - "${APP_PORT:-80}:80"
+    expose:
+      - "80"
     environment:
       APP_NAME: ${APP_NAME:-CY-Market}
       APP_ENV: ${APP_ENV:-production}
@@ -243,6 +242,23 @@ services:
     depends_on:
       - db
 
+  # TLS-terminating reverse proxy: obtains and renews the Let's Encrypt
+  # certificate automatically and forwards to the app container. Needs the
+  # domain's DNS A record pointing at this VPS and ports 80/443 free.
+  # No Caddyfile needed - the command line is the whole config.
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    command: ["caddy", "reverse-proxy", "--from", "${SITE_DOMAIN:-cy-market.com}", "--to", "app:80"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
   db:
     image: mysql:8.0
     restart: unless-stopped
@@ -262,3 +278,5 @@ services:
 volumes:
   app-storage:
   db-data:
+  caddy-data:
+  caddy-config:
