@@ -26,7 +26,7 @@ class CheckoutService
     ) {}
 
     /**
-     * @param  array{recipient_name:string, phone:string, delivery_zone_id:?int, address_line:string, landmark:?string, latitude:?float, longitude:?float, notes:?string, coupon_code:?string, guest_name:?string, guest_email:?string}  $delivery
+     * @param  array{recipient_name:string, phone:string, delivery_zone_id:?int, address_line:string, landmark:?string, latitude:?float, longitude:?float, notes:?string, coupon_code:?string, momo_number?:?string, guest_name:?string, guest_email:?string}  $delivery
      * @return array{order: Order, redirect_url: string}
      *
      * @throws CheckoutException
@@ -90,7 +90,7 @@ class CheckoutService
 
             $cart->update(['status' => 'converted']);
 
-            $result = $this->gateway->initiateCheckout($order);
+            $result = $this->gateway->initiateCheckout($order, $delivery['momo_number'] ?? null);
 
             return ['order' => $order->fresh(), 'redirect_url' => $result['redirect_url']];
         });

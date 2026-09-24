@@ -131,8 +131,8 @@ return [
             'handler' => NullHandler::class,
         ],
 
-        // Sandbox/log-mode SMS and Hubtel payment calls are written here
-        // instead of a live gateway - see config/sms.php, config/hubtel.php.
+        // Sandbox/log-mode SMS and MTN MoMo payment calls are written here
+        // instead of a live gateway - see config/sms.php, config/momo.php.
         'sms' => [
             'driver' => 'daily',
             'path' => storage_path('logs/sms.log'),
@@ -141,9 +141,9 @@ return [
             'replace_placeholders' => true,
         ],
 
-        'hubtel' => [
+        'momo' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/hubtel.log'),
+            'path' => storage_path('logs/momo.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'max_files' => 30,
             'replace_placeholders' => true,

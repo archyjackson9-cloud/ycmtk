@@ -162,8 +162,8 @@ class OrderSeeder extends Seeder
 
             $payment = Payment::create([
                 'order_id' => $order->id,
-                'provider' => 'hubtel',
-                'channel' => fake()->randomElement(['mtn-gh', 'vodafone-gh', 'airteltigo-gh']),
+                'provider' => 'mtn_momo',
+                'channel' => fake()->randomElement(['mtn-momo']),
                 'amount' => $order->total,
                 'status' => PaymentStatus::Successful,
                 'raw_response' => ['mode' => 'sandbox', 'seeded' => true],
@@ -175,8 +175,8 @@ class OrderSeeder extends Seeder
             // active choice - demonstrates the "Payment failed" fallback.
             $payment = Payment::create([
                 'order_id' => $order->id,
-                'provider' => 'hubtel',
-                'channel' => fake()->randomElement(['mtn-gh', 'vodafone-gh']),
+                'provider' => 'mtn_momo',
+                'channel' => fake()->randomElement(['mtn-momo']),
                 'amount' => $order->total,
                 'status' => PaymentStatus::Failed,
                 'raw_response' => ['mode' => 'sandbox', 'seeded' => true, 'reason' => 'insufficient_funds'],

@@ -44,7 +44,11 @@ class CheckoutController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        // Accept "024 123 4567" style input for the MoMo number.
+        $request->merge(['momo_number' => preg_replace('/[\s-]+/', '', (string) $request->input('momo_number')) ?: null]);
+
         $rules = [
+            'momo_number' => ['nullable', 'regex:/^(\+?233|0)?[235]\d{8}$/'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
             'delivery_zone_id' => ['nullable', 'exists:delivery_zones,id'],
@@ -69,6 +73,10 @@ class CheckoutController extends Controller
             $result = $this->checkout->checkout($cart, $data, $request->user());
         } catch (CheckoutException $e) {
             return redirect()->route('checkout.index')->with('error', $e->getMessage())->with('checkout_issues', $e->issues());
+        } catch (\RuntimeException $e) {
+            // Gateway unreachable/rejected: the order transaction rolled back,
+            // so the cart is intact and the customer can simply retry.
+            return redirect()->route('checkout.index')->withInput()->with('error', $e->getMessage());
         }
 
         // Guests can track this order later without an account (TOR §6.3
@@ -80,9 +88,8 @@ class CheckoutController extends Controller
 
     /**
      * GET /checkout/return - the customer's browser lands here after
-     * leaving to approve payment on Hubtel (or the sandbox page). The
-     * webhook is the source of truth for status, so this is purely
-     * informational.
+     * being asked to approve the MoMo prompt on their phone (or the simulate
+     * page). The order page polls for the final status.
      */
     public function returnFromGateway(Request $request, string $reference)
     {
@@ -90,18 +97,18 @@ class CheckoutController extends Controller
 
         return redirect()->route('orders.show', $payment->order)->with(
             $payment->status === PaymentStatus::Successful ? 'success' : 'info',
-            'Thanks! We are confirming your payment - this page will update automatically via SMS and here shortly.'
+            'Check your phone and approve the MTN MoMo prompt with your PIN - this page updates automatically once payment is confirmed.'
         );
     }
 
     /**
-     * Sandbox-mode "pay" page (HUBTEL_MODE=sandbox, the default) - lets a
+     * Simulate-mode "pay" page (MOMO_MODE=simulate, the default) - lets a
      * tester approve or decline the mock payment so the full order
-     * lifecycle can be exercised without live Hubtel credentials.
+     * lifecycle can be exercised without live MTN credentials.
      */
     public function sandboxPay(string $reference)
     {
-        abort_unless(config('hubtel.mode', 'sandbox') !== 'live', 404);
+        abort_unless(config('momo.mode', 'simulate') !== 'live', 404);
 
         $payment = Payment::with('order')->where('reference', $reference)->firstOrFail();
 
@@ -110,16 +117,15 @@ class CheckoutController extends Controller
 
     public function sandboxConfirm(Request $request, string $reference, PaymentGatewayInterface $gateway): RedirectResponse
     {
-        abort_unless(config('hubtel.mode', 'sandbox') !== 'live', 404);
+        abort_unless(config('momo.mode', 'simulate') !== 'live', 404);
 
         $approve = $request->boolean('approve');
         $payment = Payment::where('reference', $reference)->firstOrFail();
 
         $gateway->handleCallback([
-            'ClientReference' => $reference,
-            'TransactionId' => 'SANDBOX-'.strtoupper(uniqid()),
-            'Status' => $approve ? 'Success' : 'Failed',
-            'Channel' => 'sandbox',
+            'externalId' => $reference,
+            'financialTransactionId' => 'SIM-'.strtoupper(uniqid()),
+            'status' => $approve ? 'SUCCESSFUL' : 'FAILED',
         ]);
 
         return redirect()->route('checkout.return', $reference);

@@ -68,7 +68,7 @@ Fill in every placeholder — at minimum:
 
 - `APP_URL` — your real `https://` domain
 - `DB_PASSWORD` and `DB_ROOT_PASSWORD` — pick strong values, they're only used internally between the `app` and `db` containers
-- Leave `HUBTEL_MODE=sandbox` and `SMS_MODE=log` until you're actually ready to take real payments / send real SMS — flip them and fill in the credential fields above them when that day comes
+- Leave `MOMO_MODE=simulate` and `SMS_MODE=log` until you're actually ready to take real payments / send real SMS. For MTN MoMo, set `MOMO_MODE=live` plus the `MOMO_*` credentials (see below); `MOMO_CALLBACK_URL` must be your public https URL
 - `GOOGLE_MAPS_API_KEY` — optional; the delivery-location picker and admin order map show a "not configured" notice until this is set
 
 This `.env` stays only on the server — it's already in `.gitignore` and never gets built into the image (`.dockerignore` excludes it too).
@@ -159,3 +159,19 @@ redeploy — just make sure `.env` itself is current before restarting.
 - **Uploaded product/banner images 404** — confirm `public/storage` exists inside the container: `docker compose exec app ls -la public/storage`. `docker/entrypoint.sh` creates this symlink automatically if missing; if it's missing anyway, run `docker compose exec app php artisan storage:link` by hand.
 - **Uploaded images disappear after a redeploy** — they shouldn't: `storage/` is a named Docker volume (`app-storage`) that survives `docker compose up -d --build`. It's only lost if you explicitly run `docker compose down -v`. Never use `-v` unless you mean to wipe the database and uploads.
 - **Scheduled jobs (stock reservations, abandoned carts) not firing** — `docker compose logs scheduler` should show a `schedule:run` line every 60 seconds.
+
+## MTN MoMo payments (pilot)
+
+The checkout asks for an MTN MoMo number; after the order is placed MTN
+sends a PIN prompt to that phone and the order page updates by itself once
+it is approved. Settings (all in `.env`, see `.env.docker.example`):
+
+- `MOMO_MODE=simulate` — local Approve/Decline page, no MTN account needed (default).
+- `MOMO_MODE=live` — real API. Use `MOMO_ENVIRONMENT=sandbox` + `MOMO_CURRENCY=EUR` against MTN's developer sandbox first, then `MOMO_ENVIRONMENT=mtnghana`, `MOMO_BASE_URL=https://proxy.momoapi.mtn.com`, `MOMO_CURRENCY=GHS` with the credentials MTN Ghana issues.
+- `MOMO_CALLBACK_URL=https://yourdomain/webhooks/mtn-momo` — MTN's status callback. It is never trusted on its own: the app re-checks the status with MTN, and the scheduler container also reconciles any payment still pending after a minute.
+
+After deploying this update run the new migration once:
+
+```bash
+docker compose exec app php artisan migrate --force
+```

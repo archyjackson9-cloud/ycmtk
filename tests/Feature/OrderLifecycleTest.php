@@ -48,7 +48,7 @@ class OrderLifecycleTest extends TestCase
         ]);
 
         $order->payments()->create([
-            'provider' => 'hubtel',
+            'provider' => 'mtn_momo',
             'amount' => $order->total,
             'status' => PaymentStatus::Successful,
             'paid_at' => now(),

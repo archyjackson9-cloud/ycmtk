@@ -11,7 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 
 /**
- * Read-only Hubtel payment ledger (TOR §6.10 "financial settings" access
+ * Read-only MTN MoMo payment ledger (TOR §6.10 "financial settings" access
  * restricted to Super Admin; §11 reconciliation).
  */
 class PaymentResource extends Resource
@@ -55,7 +55,7 @@ class PaymentResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('order.order_number')->label('Order')->searchable(),
                 Tables\Columns\TextColumn::make('reference')->searchable(),
-                Tables\Columns\TextColumn::make('hubtel_transaction_id')->label('Hubtel Transaction')->toggleable(),
+                Tables\Columns\TextColumn::make('provider_transaction_id')->label('MoMo Transaction')->toggleable(),
                 Tables\Columns\TextColumn::make('channel'),
                 Tables\Columns\TextColumn::make('amount')->money('GHS')->sortable(),
                 Tables\Columns\TextColumn::make('status')->badge()->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),

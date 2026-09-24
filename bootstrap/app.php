@@ -22,10 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'storefront' => ShareStorefrontData::class,
         ]);
 
-        // The Hubtel webhook is a server-to-server callback, so it must be
+        // The MTN MoMo callback is a server-to-server callback, so it must be
         // exempt from CSRF verification (TOR §5.2 Payment Service).
         $middleware->validateCsrfTokens(except: [
-            'webhooks/hubtel',
+            'webhooks/mtn-momo',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

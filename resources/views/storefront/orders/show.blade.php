@@ -53,8 +53,8 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <div>
-                    <h3 class="text-xs font-bold text-gray-900">Awaiting Hubtel Payment Verification</h3>
-                    <p class="text-[11px] text-gray-500">Stock is temporarily reserved for this order.</p>
+                    <h3 class="text-xs font-bold text-gray-900">Awaiting MTN MoMo Approval</h3>
+                    <p class="text-[11px] text-gray-500">Approve the payment prompt on your phone with your MoMo PIN. Stock is reserved for a short time.</p>
                 </div>
             </div>
             <form action="{{ route('orders.cancel', $order) }}" method="POST" onsubmit="return confirm('Cancel this order and release stock?')">
@@ -135,7 +135,7 @@
                 <div class="liquid-glass rounded-[28px] p-6 shadow-xs space-y-3">
                     <h2 class="text-xs font-extrabold uppercase tracking-wider text-gray-900 flex items-center gap-2">
                         <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                        Hubtel MoMo Payment
+                        MTN MoMo Payment
                     </h2>
                     @foreach($order->payments as $payment)
                         <div class="flex items-center justify-between text-xs py-1.5 border-b border-gray-100 last:border-0">
@@ -148,7 +148,7 @@
 
                     @if($order->status === \App\Enums\OrderStatus::PendingPayment && $order->latestPayment()?->status === \App\Enums\PaymentStatus::Pending)
                         @php($pendingPayment = $order->latestPayment())
-                        @if(config('hubtel.mode', 'sandbox') !== 'live')
+                        @if(config('momo.mode', 'simulate') !== 'live')
                             <div class="pt-2">
                                 <a href="{{ route('checkout.sandbox-pay', $pendingPayment->reference) }}" 
                                    class="block text-center bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full py-2.5 shadow-xs transition-all">
@@ -164,4 +164,28 @@
     </div>
 
 </div>
+
+{{-- While MoMo approval is pending, poll for the outcome and reload once it resolves. --}}
+@if($order->status === \App\Enums\OrderStatus::PendingPayment && $order->latestPayment()?->status === \App\Enums\PaymentStatus::Pending && config('momo.mode') === 'live')
+    @push('scripts')
+        <script>
+            (function () {
+                var url = @json(route('orders.payment-status', $order));
+                var tries = 0;
+                var timer = setInterval(function () {
+                    if (++tries > 100) { clearInterval(timer); return; }
+                    fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                        .then(function (r) { return r.ok ? r.json() : null; })
+                        .then(function (d) {
+                            if (d && d.payment_status && d.payment_status !== 'pending') {
+                                clearInterval(timer);
+                                window.location.reload();
+                            }
+                        })
+                        .catch(function () {});
+                }, 4000);
+            })();
+        </script>
+    @endpush
+@endif
 @endsection

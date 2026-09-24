@@ -60,7 +60,7 @@ class OrderService
             // (TOR §6.4). The Inventory Officer then moves it to Processing
             // themselves once they start preparing it - "all fulfilment is
             // handled directly by CY-Market" (TOR §6.4).
-            $this->transition($order, OrderStatus::Paid, note: 'Payment confirmed by Hubtel.');
+            $this->transition($order, OrderStatus::Paid, note: 'Payment confirmed by MTN MoMo.');
             $order->update(['paid_at' => now()]);
 
             $this->sms->sendOrderEvent($order->fresh(), OrderEventType::PaymentReceived);
@@ -137,7 +137,7 @@ class OrderService
 
     /**
      * TOR §11 "Order cancelled after payment -> Automatic refund trigger
-     * via Hubtel (or manual process with audit trail)."
+     * via MTN MoMo (or manual process with audit trail)."
      */
     public function cancel(Order $order, string $reason, ?User $actor = null, bool $notify = true): Order
     {
@@ -161,11 +161,11 @@ class OrderService
             $order->update(['cancelled_reason' => $reason, 'cancelled_at' => now()]);
 
             if ($wasPaid) {
-                Log::channel('hubtel')->info('Refund required for cancelled paid order', [
+                Log::channel('momo')->info('Refund required for cancelled paid order', [
                     'order' => $order->order_number,
                     'amount' => (float) $order->total,
                 ]);
-                // A real Hubtel refund API call would be issued here once
+                // A real MTN MoMo refund API call would be issued here once
                 // live credentials are configured; logged for the
                 // reconciliation job/manual process in the meantime
                 // (TOR §11).

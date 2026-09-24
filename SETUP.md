@@ -56,7 +56,7 @@ being disabled.
 ## 3. Environment
 
 Your existing `.env` (and its `APP_KEY`) was kept as-is — a CY-Market
-settings block was appended to the bottom of it (delivery fee, Hubtel
+settings block was appended to the bottom of it (delivery fee, MTN MoMo
 sandbox mode, SMS log mode, Filament path). `DB_CONNECTION` is set to
 `mysql` against the `cymarket` database, `root` user, no password —
 XAMPP's defaults. Adjust `DB_USERNAME`/`DB_PASSWORD` in `.env` if your
@@ -114,13 +114,13 @@ data only — change every one of these before any real deployment.
 
 ## 7. Testing checkout end-to-end (sandbox mode, zero credentials)
 
-`HUBTEL_MODE=sandbox` (the default) replaces the real Hubtel redirect with a
+`MOMO_MODE=simulate` (the default) replaces the real MTN MoMo prompt with a
 local "Approve / Decline" page so you can exercise the complete order
-lifecycle without any Hubtel account:
+lifecycle without any MTN account:
 
 1. Browse the storefront, add products to the cart, go to Checkout.
 2. Fill in delivery details and submit — you'll land on a sandbox payment
-   page instead of Hubtel's real one.
+   page instead of a real MoMo prompt.
 3. Click **Approve** — the order is marked Paid, stock is deducted, and an
    SMS is "sent" (written to `storage/logs/sms-*.log` since `SMS_MODE=log`).
    Click **Decline** instead to test the payment-failed fallback (order
@@ -130,11 +130,11 @@ lifecycle without any Hubtel account:
    Delivered → Completed, or Cancel it. Every transition is logged to the
    order's audit trail and triggers another simulated SMS.
 
-Because this is a real webhook-style flow (`HubtelPaymentService::
+Because this is a real webhook-style flow (`MtnMomoPaymentService::
 handleCallback()`), it is idempotent — replaying the same confirmation
 twice will not double-charge stock or double-send SMS. This exact scenario
 is covered by `tests/Feature/CheckoutFlowTest.php` and
-`tests/Feature/HubtelWebhookTest.php`.
+`tests/Feature/MtnMomoWebhookTest.php` and `tests/Feature/MtnMomoLiveTest.php`.
 
 ## 8. Going live later
 
@@ -142,12 +142,19 @@ Nothing else in the codebase needs to change — just flip the mode flags in
 `.env` once you have real credentials:
 
 ```
-HUBTEL_MODE=live
-HUBTEL_CLIENT_ID=...
-HUBTEL_CLIENT_SECRET=...
-HUBTEL_MERCHANT_ACCOUNT_NUMBER=...
-HUBTEL_CALLBACK_URL=https://your-real-domain/webhooks/hubtel
-HUBTEL_RETURN_URL=https://your-real-domain/checkout/return
+# MTN MoMo (Collection API, Request to Pay). Try MTN's developer sandbox first:
+MOMO_MODE=live
+MOMO_ENVIRONMENT=sandbox
+MOMO_BASE_URL=https://sandbox.momodeveloper.mtn.com
+MOMO_CURRENCY=EUR            # sandbox only accepts EUR
+MOMO_SUBSCRIPTION_KEY=...    # Collection product key
+MOMO_API_USER=...            # UUID created via the sandbox provisioning API
+MOMO_API_KEY=...
+MOMO_CALLBACK_URL=https://your-real-domain/webhooks/mtn-momo
+
+# Real payments in Ghana: MOMO_ENVIRONMENT=mtnghana,
+# MOMO_BASE_URL=https://proxy.momoapi.mtn.com, MOMO_CURRENCY=GHS and the
+# credentials issued by MTN Ghana's MoMo business onboarding.
 
 SMS_MODE=live
 SMS_GATEWAY_BASE_URL=...
@@ -155,7 +162,7 @@ SMS_GATEWAY_API_KEY=...
 SMS_GATEWAY_CLIENT_ID=...
 ```
 
-`HubtelPaymentService` and `SmsNotificationService` both branch on these
+`MtnMomoPaymentService` and `SmsNotificationService` both branch on these
 config values — the sandbox/log code paths and the live HTTP-call code
 paths already exist side by side.
 
@@ -186,7 +193,7 @@ payment → order-confirmed flow (including duplicate-payment idempotency and
 a declined-payment reservation release), the order status state machine
 (valid/invalid transitions, cancellation restocking), the stock-reservation
 race condition described in the TOR (two customers on the last units — the
-second is correctly placed On Hold), the Hubtel webhook endpoint (success,
+second is correctly placed On Hold), the MTN MoMo callback endpoint (success,
 failure, unknown reference, replay idempotency), and Filament admin RBAC
 gates per role. Tests run against an **in-memory SQLite** database
 regardless of your MySQL setup above (`phpunit.xml` hard-codes
@@ -196,7 +203,7 @@ real `cymarket` database and need no extra setup.
 ## 11. What's built vs. scaffolded
 
 **Fully built (Phase 1, per the agreed scope):** product catalogue with
-categories/seasonality/low-stock, cart, guest + registered checkout, Hubtel
+categories/seasonality/low-stock, cart, guest + registered checkout, MTN MoMo
 sandbox payment flow, SMS-first notifications (log mode), the full order
 lifecycle with audit trail, soft stock reservation with race-condition
 handling, the Filament admin panel (Products, Categories, Orders, Users,

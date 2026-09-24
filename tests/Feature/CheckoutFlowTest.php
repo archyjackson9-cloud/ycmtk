@@ -15,8 +15,8 @@ use Tests\TestCase;
  * End-to-end guest checkout through the sandbox payment gateway (TOR §6.3
  * "Cart -> Delivery -> Payment -> Confirmation", §6.5 Payments, §11
  * "Duplicate payment / double-click on pay -> Idempotency keys with
- * Hubtel prevent duplicate charges"). Runs entirely against HUBTEL_MODE
- * =sandbox (the config default) so no network access is required.
+ * MoMo prevent duplicate charges"). Runs entirely against MOMO_MODE
+ * =simulate (the config default) so no network access is required.
  */
 class CheckoutFlowTest extends TestCase
 {

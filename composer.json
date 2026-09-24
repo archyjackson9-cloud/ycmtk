@@ -2,8 +2,8 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "villexprime/cy-market",
     "type": "project",
-    "description": "CY-Market — single-seller, farm-direct e-commerce platform for CY-Market (Ghana). Built on Laravel, Filament and Hubtel Mobile Money.",
-    "keywords": ["laravel", "ecommerce", "cy-market", "hubtel", "ghana"],
+    "description": "CY-Market — single-seller, farm-direct e-commerce platform for CY-Market (Ghana). Built on Laravel, Filament and MTN Mobile Money.",
+    "keywords": ["laravel", "ecommerce", "cy-market", "mtn-momo", "ghana"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

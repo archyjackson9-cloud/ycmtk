@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 class Payment extends Model
 {
     protected $fillable = [
-        'order_id', 'provider', 'reference', 'hubtel_transaction_id', 'channel',
+        'order_id', 'provider', 'reference', 'provider_transaction_id', 'provider_reference', 'payer_phone', 'channel',
         'amount', 'status', 'raw_request', 'raw_response', 'paid_at',
     ];
 
@@ -33,8 +33,8 @@ class Payment extends Model
     }
 
     /**
-     * Idempotency key sent to Hubtel (TOR §11 "Duplicate payment /
-     * double-click on pay -> Idempotency keys with Hubtel prevent duplicate
+     * Idempotency key for the payment gateway (TOR §11 "Duplicate payment /
+     * double-click on pay -> Idempotency keys prevent duplicate
      * charges").
      */
     public static function generateReference(): string

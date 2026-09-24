@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use App\Services\Notifications\SmsGatewayInterface;
 use App\Services\Notifications\SmsNotificationService;
-use App\Services\Payments\HubtelPaymentService;
+use App\Services\Payments\MtnMomoPaymentService;
 use App\Services\Payments\PaymentGatewayInterface;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
         // Service abstraction ... designed from Phase 1 to support
         // multiple gateways without touching the Order Management
         // Service").
-        $this->app->bind(PaymentGatewayInterface::class, HubtelPaymentService::class);
+        $this->app->bind(PaymentGatewayInterface::class, MtnMomoPaymentService::class);
         $this->app->bind(SmsGatewayInterface::class, SmsNotificationService::class);
     }
 

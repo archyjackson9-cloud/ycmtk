@@ -13,3 +13,4 @@ Artisan::command('inspire', function () {
 Schedule::command('cymarket:release-expired-reservations')->everyMinute()->withoutOverlapping();
 Schedule::command('cymarket:mark-abandoned-carts')->hourly()->withoutOverlapping();
 Schedule::command('cymarket:escalate-stale-orders')->hourly()->withoutOverlapping();
+Schedule::command('cymarket:reconcile-momo-payments')->everyMinute()->withoutOverlapping();

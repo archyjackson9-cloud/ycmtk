@@ -6,7 +6,10 @@ use App\Enums\OrderStatus;
 use App\Enums\RefundPreference;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Enums\PaymentStatus;
 use App\Services\OrderService;
+use App\Services\Payments\PaymentGatewayInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -33,6 +36,26 @@ class OrderController extends Controller
         $order->load(['items.product.images', 'statusHistories', 'payments', 'deliveryZone']);
 
         return view('storefront.orders.show', compact('order'));
+    }
+
+    /**
+     * JSON poll used by the order page while the customer approves the MoMo
+     * prompt on their phone. Asks MTN for the latest status if still pending.
+     */
+    public function paymentStatus(Request $request, Order $order, PaymentGatewayInterface $gateway): JsonResponse
+    {
+        $this->authorizeOrderAccess($request, $order);
+
+        $payment = $order->latestPayment();
+
+        if ($payment && $payment->status === PaymentStatus::Pending) {
+            $payment = $gateway->refreshStatus($payment);
+        }
+
+        return response()->json([
+            "payment_status" => $payment?->status->value,
+            "order_status" => $order->fresh()->status->value,
+        ]);
     }
 
     public function cancel(Request $request, Order $order): RedirectResponse

@@ -1,12 +1,12 @@
 @extends('layouts.guest')
 
-@section('title', 'Simulate Hubtel Payment — CY-Market')
+@section('title', 'Simulate MTN MoMo Payment — CY-Market')
 
 @section('content')
     <div class="text-center mb-6">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-extrabold tracking-wider uppercase mb-3 border border-amber-300/60 shadow-2xs">
             <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
-            Hubtel Sandbox Mode
+            MoMo Simulation Mode
         </span>
         <h1 class="text-xl font-black text-gray-900 tracking-tight">Simulate Mobile Money</h1>
         <p class="text-xs text-gray-500 mt-1">This simulation allows testing the real-time order confirmation, stock debit, and SMS trigger without actual mobile money deduction.</p>

@@ -11,13 +11,13 @@ use Tests\Concerns\CreatesCymarketFixtures;
 use Tests\TestCase;
 
 /**
- * Server-to-server Hubtel payment webhook (TOR §5.2 Payment Service
+ * Server-to-server MTN MoMo payment callback (TOR §5.2 Payment Service
  * "webhook handling, idempotency"; §11 "Duplicate payment / double-click
- * on pay -> Idempotency keys with Hubtel prevent duplicate charges").
+ * on pay -> Idempotency keys prevent duplicate charges").
  * CSRF is excepted for this route in bootstrap/app.php, matching a real
  * server-to-server callback.
  */
-class HubtelWebhookTest extends TestCase
+class MtnMomoWebhookTest extends TestCase
 {
     use CreatesCymarketFixtures, RefreshDatabase;
 
@@ -48,7 +48,7 @@ class HubtelWebhookTest extends TestCase
         ]);
 
         return $order->payments()->create([
-            'provider' => 'hubtel',
+            'provider' => 'mtn_momo',
             'amount' => $order->total,
             'status' => PaymentStatus::Pending,
         ]);
@@ -58,11 +58,10 @@ class HubtelWebhookTest extends TestCase
     {
         $payment = $this->pendingPayment();
 
-        $response = $this->postJson('/webhooks/hubtel', [
-            'ClientReference' => $payment->reference,
-            'TransactionId' => 'HUB-TEST-001',
-            'Status' => 'Success',
-            'Channel' => 'mtn-gh',
+        $response = $this->postJson('/webhooks/mtn-momo', [
+            'externalId' => $payment->reference,
+            'financialTransactionId' => 'MOMO-TEST-001',
+            'status' => 'SUCCESSFUL',
         ]);
 
         $response->assertOk();
@@ -70,17 +69,17 @@ class HubtelWebhookTest extends TestCase
 
         $this->assertSame(PaymentStatus::Successful, $payment->fresh()->status);
         $this->assertSame(OrderStatus::Paid, $payment->fresh()->order->status);
-        $this->assertSame('HUB-TEST-001', $payment->fresh()->hubtel_transaction_id);
+        $this->assertSame('MOMO-TEST-001', $payment->fresh()->provider_transaction_id);
     }
 
     public function test_a_failed_webhook_marks_the_payment_failed_without_touching_the_order_status(): void
     {
         $payment = $this->pendingPayment();
 
-        $response = $this->postJson('/webhooks/hubtel', [
-            'ClientReference' => $payment->reference,
-            'TransactionId' => 'HUB-TEST-002',
-            'Status' => 'Failed',
+        $response = $this->postJson('/webhooks/mtn-momo', [
+            'externalId' => $payment->reference,
+            'financialTransactionId' => 'MOMO-TEST-002',
+            'status' => 'FAILED',
         ]);
 
         $response->assertOk();
@@ -90,10 +89,10 @@ class HubtelWebhookTest extends TestCase
 
     public function test_a_webhook_for_an_unknown_reference_is_reported_and_does_not_crash(): void
     {
-        $response = $this->postJson('/webhooks/hubtel', [
-            'ClientReference' => 'PAY-DOES-NOT-EXIST',
-            'TransactionId' => 'HUB-TEST-003',
-            'Status' => 'Success',
+        $response = $this->postJson('/webhooks/mtn-momo', [
+            'externalId' => 'PAY-DOES-NOT-EXIST',
+            'financialTransactionId' => 'MOMO-TEST-003',
+            'status' => 'SUCCESSFUL',
         ]);
 
         $response->assertStatus(422);
@@ -104,18 +103,17 @@ class HubtelWebhookTest extends TestCase
     {
         $payment = $this->pendingPayment();
         $payload = [
-            'ClientReference' => $payment->reference,
-            'TransactionId' => 'HUB-TEST-004',
-            'Status' => 'Success',
-            'Channel' => 'vodafone-gh',
+            'externalId' => $payment->reference,
+            'financialTransactionId' => 'MOMO-TEST-004',
+            'status' => 'SUCCESSFUL',
         ];
 
-        $this->postJson('/webhooks/hubtel', $payload)->assertOk();
+        $this->postJson('/webhooks/mtn-momo', $payload)->assertOk();
         $order = $payment->fresh()->order;
         $historyCountAfterFirst = $order->statusHistories()->count();
 
-        // Hubtel (or a reconciliation job) replays the same webhook.
-        $this->postJson('/webhooks/hubtel', $payload)->assertOk();
+        // MTN (or a reconciliation job) replays the same webhook.
+        $this->postJson('/webhooks/mtn-momo', $payload)->assertOk();
 
         $this->assertSame(OrderStatus::Paid, $order->fresh()->status);
         $this->assertSame($historyCountAfterFirst, $order->fresh()->statusHistories()->count(), 'A replayed webhook must not create a second status transition.');

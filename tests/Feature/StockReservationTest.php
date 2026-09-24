@@ -79,8 +79,8 @@ class StockReservationTest extends TestCase
         $stock->reserveForOrder($orderB);
         $this->assertSame(10, $product->fresh()->reserved_quantity);
 
-        $paymentA = $orderA->payments()->create(['provider' => 'hubtel', 'amount' => $orderA->total, 'status' => PaymentStatus::Successful, 'paid_at' => now()]);
-        $paymentB = $orderB->payments()->create(['provider' => 'hubtel', 'amount' => $orderB->total, 'status' => PaymentStatus::Successful, 'paid_at' => now()]);
+        $paymentA = $orderA->payments()->create(['provider' => 'mtn_momo', 'amount' => $orderA->total, 'status' => PaymentStatus::Successful, 'paid_at' => now()]);
+        $paymentB = $orderB->payments()->create(['provider' => 'mtn_momo', 'amount' => $orderB->total, 'status' => PaymentStatus::Successful, 'paid_at' => now()]);
 
         // Order A's payment confirms first - it succeeds and consumes all 5 units.
         $orders->markPaid($paymentA->fresh());

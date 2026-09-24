@@ -13,7 +13,7 @@ use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\HomeController;
 use App\Http\Controllers\Storefront\OrderController;
 use App\Http\Controllers\Storefront\ProductController;
-use App\Http\Controllers\Webhooks\HubtelWebhookController;
+use App\Http\Controllers\Webhooks\MtnMomoWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,6 +44,7 @@ Route::middleware('storefront')->group(function () {
     Route::post('/track-order', [OrderController::class, 'track'])->name('orders.track');
 
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/payment-status', [OrderController::class, 'paymentStatus'])->name('orders.payment-status');
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::post('/orders/{order}/resolve-hold', [OrderController::class, 'resolveHold'])->name('orders.resolve-hold');
 
@@ -88,7 +89,7 @@ Route::middleware('storefront')->group(function () {
 | path in bootstrap/app.php.
 |--------------------------------------------------------------------------
 */
-Route::post('/webhooks/hubtel', [HubtelWebhookController::class, 'handle'])->name('webhooks.hubtel');
+Route::match(['post', 'put'], '/webhooks/mtn-momo', [MtnMomoWebhookController::class, 'handle'])->name('webhooks.mtn-momo');
 
 /*
 |--------------------------------------------------------------------------
