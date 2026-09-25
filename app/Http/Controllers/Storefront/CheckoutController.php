@@ -97,7 +97,11 @@ class CheckoutController extends Controller
 
         return redirect()->route('orders.show', $payment->order)->with(
             $payment->status === PaymentStatus::Successful ? 'success' : 'info',
-            'Check your phone and approve the MTN MoMo prompt with your PIN - this page updates automatically once payment is confirmed.'
+            match ($payment->status) {
+                PaymentStatus::Successful => 'Payment confirmed - thank you! Your order is now being prepared.',
+                PaymentStatus::Failed => 'The payment was not completed. You can place the order again when ready.',
+                default => 'Check your phone and approve the MTN MoMo prompt with your PIN - this page updates automatically once payment is confirmed.',
+            }
         );
     }
 
