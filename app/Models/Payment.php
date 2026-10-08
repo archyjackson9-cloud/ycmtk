@@ -11,7 +11,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'order_id', 'provider', 'reference', 'provider_transaction_id', 'provider_reference', 'payer_phone', 'channel',
-        'amount', 'status', 'raw_request', 'raw_response', 'paid_at',
+        'amount', 'status', 'raw_request', 'raw_response', 'proof_path', 'confirmed_by', 'note', 'paid_at',
     ];
 
     protected function casts(): array
@@ -49,5 +49,10 @@ class Payment extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function confirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
     }
 }

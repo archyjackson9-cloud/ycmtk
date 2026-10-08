@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\RefundPreference;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Enums\PaymentStatus;
 use App\Services\OrderService;
-use App\Services\Payments\PaymentGatewayInterface;
+use App\Services\Payments\PaymentGatewayResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,21 +40,23 @@ class OrderController extends Controller
 
     /**
      * JSON poll used by the order page while the customer approves the MoMo
-     * prompt on their phone. Asks MTN for the latest status if still pending.
+     * prompt on their phone. Asks MTN for the latest status if still
+     * pending; a no-op for a pay-by-transfer payment, which only changes
+     * once staff confirm it from Admin > Payments.
      */
-    public function paymentStatus(Request $request, Order $order, PaymentGatewayInterface $gateway): JsonResponse
+    public function paymentStatus(Request $request, Order $order, PaymentGatewayResolver $gateways): JsonResponse
     {
         $this->authorizeOrderAccess($request, $order);
 
         $payment = $order->latestPayment();
 
         if ($payment && $payment->status === PaymentStatus::Pending) {
-            $payment = $gateway->refreshStatus($payment);
+            $payment = $gateways->forProvider($payment->provider)->refreshStatus($payment);
         }
 
         return response()->json([
-            "payment_status" => $payment?->status->value,
-            "order_status" => $order->fresh()->status->value,
+            'payment_status' => $payment?->status->value,
+            'order_status' => $order->fresh()->status->value,
         ]);
     }
 
@@ -122,6 +124,13 @@ class OrderController extends Controller
 
     protected function authorizeOrderAccess(Request $request, Order $order): void
     {
+        // A tracking-update email's "Track your order" link is signed (see
+        // OrderEventMail) so it works from any device, not just the browser
+        // session that placed the order.
+        if ($request->hasValidSignature()) {
+            return;
+        }
+
         if ($request->user()) {
             $this->authorize('view', $order);
 

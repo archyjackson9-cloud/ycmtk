@@ -48,6 +48,11 @@ class Settings extends Page implements HasForms
             'stock_reservation_minutes' => $settings->stockReservationMinutes(),
             'abandoned_cart_hours' => $settings->abandonedCartHours(),
             'order_escalation_hours' => $settings->orderEscalationHours(),
+            'manual_payment_reservation_hours' => $settings->manualPaymentReservationHours(),
+            'manual_payment_account_name' => $settings->manualPaymentAccountName(),
+            'manual_payment_account_number' => $settings->manualPaymentAccountNumber(),
+            'manual_payment_network' => $settings->manualPaymentNetwork(),
+            'manual_payment_instructions' => $settings->manualPaymentInstructions(),
         ], $smsTemplates));
     }
 
@@ -89,6 +94,29 @@ class Settings extends Page implements HasForms
                             ->numeric()->required()->minValue(1),
                     ])->columns(3),
 
+                Forms\Components\Section::make('Pay by Transfer')
+                    ->description('Pilot payment method: the account customers pay outside the system - leave the account fields blank to hide this option at checkout.')
+                    ->schema([
+                        Forms\Components\TextInput::make('manual_payment_network')
+                            ->label('Network / Bank Name')
+                            ->placeholder('e.g. MTN Mobile Money')
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('manual_payment_account_name')
+                            ->label('Account Name')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('manual_payment_account_number')
+                            ->label('Account Number')
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('manual_payment_reservation_hours')
+                            ->label('Stock Hold Time (hours)')
+                            ->numeric()->required()->minValue(1)
+                            ->helperText('How long we hold the items while waiting for a staff member to confirm the transfer.'),
+                        Forms\Components\Textarea::make('manual_payment_instructions')
+                            ->label('Instructions shown to the customer')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])->columns(3),
+
                 Forms\Components\Section::make('SMS Templates')
                     ->description('Sent on every order-lifecycle event (TOR §6.6).')
                     ->schema($smsFields)
@@ -107,6 +135,11 @@ class Settings extends Page implements HasForms
         $settings->set('stock_reservation_minutes', (int) $state['stock_reservation_minutes']);
         $settings->set('abandoned_cart_hours', (int) $state['abandoned_cart_hours']);
         $settings->set('order_escalation_hours', (int) $state['order_escalation_hours']);
+        $settings->set('manual_payment_reservation_hours', (int) $state['manual_payment_reservation_hours']);
+        $settings->set('manual_payment_network', (string) ($state['manual_payment_network'] ?? ''));
+        $settings->set('manual_payment_account_name', (string) ($state['manual_payment_account_name'] ?? ''));
+        $settings->set('manual_payment_account_number', (string) ($state['manual_payment_account_number'] ?? ''));
+        $settings->set('manual_payment_instructions', (string) ($state['manual_payment_instructions'] ?? ''));
 
         foreach (OrderEventType::cases() as $event) {
             $key = 'sms_template_'.$event->value;

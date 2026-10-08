@@ -27,9 +27,11 @@ class CheckoutFlowTest extends TestCase
         $zone = $this->makeDeliveryZone(['fee_override' => 15.00]);
         $product = $this->makeProduct(['selling_price' => 20.00, 'available_quantity' => 10]);
 
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 2]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 2]));
 
         $response = $this->post(route('checkout.store'), [
+            'payment_method' => 'momo',
+            'momo_number' => '+233200000099',
             'recipient_name' => 'Ama Serwaa',
             'phone' => '+233200000099',
             'delivery_zone_id' => $zone->id,
@@ -57,8 +59,10 @@ class CheckoutFlowTest extends TestCase
         $zone = $this->makeDeliveryZone();
         $product = $this->makeProduct(['available_quantity' => 10]);
 
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 3]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 3]));
         $this->post(route('checkout.store'), [
+            'payment_method' => 'momo',
+            'momo_number' => '+233200000098',
             'recipient_name' => 'Kofi Adjei',
             'phone' => '+233200000098',
             'delivery_zone_id' => $zone->id,
@@ -84,8 +88,10 @@ class CheckoutFlowTest extends TestCase
         $zone = $this->makeDeliveryZone();
         $product = $this->makeProduct(['available_quantity' => 10]);
 
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 2]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 2]));
         $this->post(route('checkout.store'), [
+            'payment_method' => 'momo',
+            'momo_number' => '+233200000097',
             'recipient_name' => 'Yaw Asante',
             'phone' => '+233200000097',
             'delivery_zone_id' => $zone->id,
@@ -109,8 +115,10 @@ class CheckoutFlowTest extends TestCase
         $zone = $this->makeDeliveryZone();
         $product = $this->makeProduct(['available_quantity' => 10]);
 
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 4]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 4]));
         $this->post(route('checkout.store'), [
+            'payment_method' => 'momo',
+            'momo_number' => '+233200000096',
             'recipient_name' => 'Abena Frimpong',
             'phone' => '+233200000096',
             'delivery_zone_id' => $zone->id,

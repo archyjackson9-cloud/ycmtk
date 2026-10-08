@@ -36,7 +36,7 @@ class CartTest extends TestCase
     {
         $product = $this->makeProduct(['available_quantity' => 10]);
 
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 2]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 2]));
         $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 3]);
 
         $this->assertSame(1, CartItem::where('product_id', $product->id)->count());
@@ -59,7 +59,7 @@ class CartTest extends TestCase
     public function test_customer_can_update_cart_item_quantity(): void
     {
         $product = $this->makeProduct(['available_quantity' => 10]);
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]));
         $item = CartItem::where('product_id', $product->id)->firstOrFail();
 
         $response = $this->patch(route('cart.update', $item), ['quantity' => 4]);
@@ -71,7 +71,7 @@ class CartTest extends TestCase
     public function test_customer_can_remove_a_cart_item(): void
     {
         $product = $this->makeProduct(['available_quantity' => 10]);
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]));
         $item = CartItem::where('product_id', $product->id)->firstOrFail();
 
         $response = $this->delete(route('cart.destroy', $item));
@@ -83,7 +83,7 @@ class CartTest extends TestCase
     public function test_updating_below_minimum_order_quantity_is_rejected(): void
     {
         $product = $this->makeProduct(['available_quantity' => 10, 'min_order_quantity' => 3]);
-        $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 3]);
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 3]));
         $item = CartItem::where('product_id', $product->id)->firstOrFail();
 
         $response = $this->patch(route('cart.update', $item), ['quantity' => 1]);

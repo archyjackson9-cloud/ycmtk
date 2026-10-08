@@ -136,6 +136,20 @@ twice will not double-charge stock or double-send SMS. This exact scenario
 is covered by `tests/Feature/CheckoutFlowTest.php` and
 `tests/Feature/MtnMomoWebhookTest.php` and `tests/Feature/MtnMomoLiveTest.php`.
 
+### Pay by transfer (second payment method) and tracking-update emails
+
+Checkout also offers "Bank / MoMo Transfer" once an account is configured
+at Admin > Settings > "Pay by Transfer". Placing an order that way sends
+the customer to an instructions page (`storage` holds the optional proof
+screenshot they can attach) instead of a MoMo prompt; nothing confirms it
+automatically — open Admin > Payments and use the **Confirm Payment** /
+**Reject** row actions on the pending row (`tests/Feature/ManualPaymentTest.php`).
+
+Every order-lifecycle event also sends a matching email (not just SMS)
+when the order has an address on file — `MAIL_MAILER=log` (the default)
+writes these to the log instead of a real inbox, so this needs no setup
+either (`tests/Feature/OrderNotificationEmailTest.php`).
+
 ## 8. Going live later
 
 Nothing else in the codebase needs to change — just flip the mode flags in
@@ -160,11 +174,19 @@ SMS_MODE=live
 SMS_GATEWAY_BASE_URL=...
 SMS_GATEWAY_API_KEY=...
 SMS_GATEWAY_CLIENT_ID=...
+
+# Order-tracking-update emails - any Laravel-supported mailer works, no
+# app code changes needed:
+MAIL_MAILER=smtp
+MAIL_HOST=...
+MAIL_USERNAME=...
+MAIL_PASSWORD=...
 ```
 
 `MtnMomoPaymentService` and `SmsNotificationService` both branch on these
 config values — the sandbox/log code paths and the live HTTP-call code
-paths already exist side by side.
+paths already exist side by side. Email just uses Laravel's own mail
+config (`config/mail.php`), so there's no app-specific "mode" flag for it.
 
 ## 9. Scheduled jobs
 

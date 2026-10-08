@@ -156,25 +156,66 @@
                 </div>
             </div>
 
-            {{-- MTN MoMo Information Card --}}
-            <div class="rounded-3xl bg-gradient-to-br from-brand-900 to-[#072d1a] border border-brand-800 p-6 text-white shadow-md space-y-3">
-                <div class="flex items-center gap-2 text-accent-400 font-bold text-xs uppercase tracking-wider">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                    <span>Pay securely with MTN Mobile Money</span>
+            {{-- Payment Method Card --}}
+            <div class="liquid-glass rounded-[28px] p-6 shadow-xs space-y-4">
+                <div class="flex items-center gap-2 pb-3 border-b border-gray-100">
+                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    <h2 class="text-sm font-extrabold uppercase tracking-wider text-gray-900">How would you like to pay?</h2>
                 </div>
-                <h3 class="text-lg font-black text-white">Protected Payment Guarantee</h3>
-                <p class="text-xs text-emerald-100/80 leading-relaxed">
-                    After you place the order, MTN sends a payment prompt to your MoMo number. Approve it with your MoMo PIN and your order is confirmed automatically.
-                </p>
-                <div>
-                    <label class="block text-xs font-bold text-emerald-100 mb-1.5">MTN MoMo number to pay from <span class="text-accent-400">*</span></label>
-                    <input type="tel" name="momo_number" value="{{ old('momo_number', $defaultAddress->phone ?? auth()->user()?->phone) }}" required inputmode="tel"
-                           placeholder="024 XXX XXXX"
-                           class="w-full rounded-2xl bg-white/95 text-gray-900 text-xs px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-accent-400">
-                    @error('momo_number')
-                        <p class="text-[11px] text-rose-300 mt-1">Enter a valid Ghana MTN number, e.g. 024 123 4567.</p>
-                    @enderror
+
+                {{-- Method Switcher --}}
+                <div class="grid {{ $manualPaymentAvailable ? 'sm:grid-cols-2' : '' }} gap-3">
+                    <label class="payment-method-option relative flex items-start gap-3 rounded-2xl border-2 border-brand-500 bg-brand-50/60 p-4 cursor-pointer transition-colors">
+                        <input type="radio" name="payment_method" value="momo" class="mt-0.5 accent-brand-600"
+                               {{ old('payment_method', 'momo') === 'momo' ? 'checked' : '' }}>
+                        <span>
+                            <span class="block text-xs font-extrabold text-gray-900">MTN MoMo</span>
+                            <span class="block text-[11px] text-gray-500 mt-0.5">Instant - approve a prompt on your phone.</span>
+                        </span>
+                    </label>
+                    @if($manualPaymentAvailable)
+                        <label class="payment-method-option relative flex items-start gap-3 rounded-2xl border-2 border-gray-200 p-4 cursor-pointer transition-colors">
+                            <input type="radio" name="payment_method" value="manual" class="mt-0.5 accent-brand-600"
+                                   {{ old('payment_method') === 'manual' ? 'checked' : '' }}>
+                            <span>
+                                <span class="block text-xs font-extrabold text-gray-900">Bank / MoMo Transfer</span>
+                                <span class="block text-[11px] text-gray-500 mt-0.5">Pay to our account directly, we confirm it on our end.</span>
+                            </span>
+                        </label>
+                    @endif
                 </div>
+
+                {{-- MTN MoMo fields --}}
+                <div data-payment-panel="momo" class="rounded-3xl bg-gradient-to-br from-brand-900 to-[#072d1a] border border-brand-800 p-6 text-white shadow-md space-y-3">
+                    <div class="flex items-center gap-2 text-accent-400 font-bold text-xs uppercase tracking-wider">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <span>Pay securely with MTN Mobile Money</span>
+                    </div>
+                    <h3 class="text-lg font-black text-white">Protected Payment Guarantee</h3>
+                    <p class="text-xs text-emerald-100/80 leading-relaxed">
+                        After you place the order, MTN sends a payment prompt to your MoMo number. Approve it with your MoMo PIN and your order is confirmed automatically.
+                    </p>
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-100 mb-1.5">MTN MoMo number to pay from <span class="text-accent-400">*</span></label>
+                        <input type="tel" name="momo_number" value="{{ old('momo_number', $defaultAddress->phone ?? auth()->user()?->phone) }}" inputmode="tel"
+                               placeholder="024 XXX XXXX"
+                               class="w-full rounded-2xl bg-white/95 text-gray-900 text-xs px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                        @error('momo_number')
+                            <p class="text-[11px] text-rose-300 mt-1">Enter a valid Ghana MTN number, e.g. 024 123 4567.</p>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Manual transfer note - account details are shown on the next page,
+                     after the order is placed, so the amount/reference are exact. --}}
+                @if($manualPaymentAvailable)
+                    <div data-payment-panel="manual" class="hidden rounded-3xl bg-gray-50 border border-gray-200 p-6 space-y-2">
+                        <h3 class="text-sm font-black text-gray-900">Pay by transfer</h3>
+                        <p class="text-xs text-gray-600 leading-relaxed">
+                            Place the order, then we will show you the account to pay and your order reference to quote. We confirm payment on our end once it lands - usually within a few hours.
+                        </p>
+                    </div>
+                @endif
             </div>
 
         </div>
@@ -213,9 +254,9 @@
 
                 {{-- Pay CTA Button --}}
                 <div class="pt-2">
-                    <button type="submit" 
+                    <button type="submit"
                             class="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-extrabold text-sm py-4 px-6 rounded-full shadow-lg shadow-brand-600/30 hover:shadow-xl hover:shadow-brand-600/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all">
-                        <span>Pay with MTN MoMo</span>
+                        <span data-pay-label>Pay with MTN MoMo</span>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
                 </div>
@@ -223,7 +264,7 @@
                 <div class="text-center pt-2">
                     <p class="text-[11px] text-gray-400 flex items-center justify-center gap-1.5">
                         <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
-                        <span>Secured MTN MoMo Transaction</span>
+                        <span>Secure Checkout</span>
                     </p>
                 </div>
             </div>
@@ -231,4 +272,44 @@
 
     </form>
 </div>
+
+{{-- Vanilla JS (no Alpine on the storefront) - toggles the MTN MoMo /
+     manual-transfer panels and the required attribute + submit label that
+     go with whichever one is selected. --}}
+@push('scripts')
+<script>
+    (function () {
+        var radios = document.querySelectorAll('input[name="payment_method"]');
+        var momoNumber = document.querySelector('input[name="momo_number"]');
+        var payLabel = document.querySelector('[data-pay-label]');
+
+        function sync() {
+            var method = document.querySelector('input[name="payment_method"]:checked');
+            method = method ? method.value : 'momo';
+
+            document.querySelectorAll('[data-payment-panel]').forEach(function (panel) {
+                var active = panel.getAttribute('data-payment-panel') === method;
+                panel.classList.toggle('hidden', ! active);
+            });
+
+            document.querySelectorAll('.payment-method-option').forEach(function (label) {
+                var selected = label.querySelector('input').value === method;
+                label.classList.toggle('border-brand-500', selected);
+                label.classList.toggle('bg-brand-50/60', selected);
+                label.classList.toggle('border-gray-200', ! selected);
+            });
+
+            if (momoNumber) {
+                momoNumber.required = method === 'momo';
+            }
+            if (payLabel) {
+                payLabel.textContent = method === 'manual' ? 'Place Order' : 'Pay with MTN MoMo';
+            }
+        }
+
+        radios.forEach(function (radio) { radio.addEventListener('change', sync); });
+        sync();
+    })();
+</script>
+@endpush
 @endsection

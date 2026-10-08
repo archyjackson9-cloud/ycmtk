@@ -53,6 +53,11 @@ return [
     // Low-stock threshold fallback when a product does not define its own.
     'default_low_stock_threshold' => (int) env('CYMARKET_DEFAULT_LOW_STOCK_THRESHOLD', 10),
 
+    // Manual "pay by transfer" orders hold their stock much longer than an
+    // instant MoMo payment, since a human has to send money and then a
+    // staff member has to notice and confirm it (see ManualPaymentService).
+    'manual_payment_reservation_hours' => (int) env('CYMARKET_MANUAL_PAYMENT_RESERVATION_HOURS', 24),
+
     /*
     |--------------------------------------------------------------------------
     | Admin panel

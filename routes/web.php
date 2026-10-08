@@ -39,6 +39,8 @@ Route::middleware('storefront')->group(function () {
     Route::get('/checkout/return/{reference}', [CheckoutController::class, 'returnFromGateway'])->name('checkout.return');
     Route::get('/checkout/sandbox-pay/{reference}', [CheckoutController::class, 'sandboxPay'])->name('checkout.sandbox-pay');
     Route::post('/checkout/sandbox-pay/{reference}', [CheckoutController::class, 'sandboxConfirm'])->name('checkout.sandbox-confirm');
+    Route::get('/checkout/manual-pay/{reference}', [CheckoutController::class, 'manualPay'])->name('checkout.manual-pay');
+    Route::post('/checkout/manual-pay/{reference}/proof', [CheckoutController::class, 'manualProofUpload'])->name('checkout.manual-pay.proof');
 
     Route::get('/track-order', [OrderController::class, 'trackForm'])->name('orders.track-form');
     Route::post('/track-order', [OrderController::class, 'track'])->name('orders.track');

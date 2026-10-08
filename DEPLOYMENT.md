@@ -175,3 +175,31 @@ After deploying this update run the new migration once:
 ```bash
 docker compose exec app php artisan migrate --force
 ```
+
+## Pay by transfer (second pilot payment method)
+
+A second, manual payment method: the customer pays an account you publish
+directly (bank or MoMo, outside the system), and a Super Admin confirms
+the matching payment by hand from Admin > Payments once they see it land.
+Nothing calls this system automatically, so there's no credential or env
+var to set up - just fill in the account details from Admin > Settings >
+"Pay by Transfer". Leaving the account name/number blank there hides the
+option at checkout entirely (it falls back to MTN MoMo only).
+
+Because a human has to notice and confirm the transfer, this method holds
+its stock reservation much longer than MoMo's near-instant one - also
+configurable on that same Settings page ("Stock Hold Time", default 24h,
+backed by `CYMARKET_MANUAL_PAYMENT_RESERVATION_HOURS` if you'd rather set
+it via env instead).
+
+## Order-tracking-update emails
+
+Every SMS trigger (TOR §6.6) now also sends a matching email, whenever the
+order has an email address on file (a registered customer's account email,
+or the optional email field at guest checkout) - logged to the same
+Super-Admin-visible notification log as SMS. This rides on Laravel's own
+mail config (`MAIL_MAILER` etc., already in `.env.docker.example`):
+`MAIL_MAILER=log` (the default) writes emails to the log instead of
+sending them, so this works with zero mail credentials out of the box.
+Set `MAIL_MAILER=smtp` (or `ses`/`postmark`/`resend`) plus the matching
+credentials to send real email - no code changes needed.

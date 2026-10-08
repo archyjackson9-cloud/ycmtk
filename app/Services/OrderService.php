@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\Notifications\EmailNotificationService;
 use App\Services\Notifications\SmsNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,15 +19,28 @@ use RuntimeException;
 /**
  * Order Management & Lifecycle Service (TOR §5.2, §6.4). Owns every
  * status transition, keeps the audit trail (order_status_histories),
- * fires the mandatory SMS triggers (TOR §6.6), and implements the
- * fallback behaviours from TOR §11.
+ * fires the mandatory SMS triggers (TOR §6.6) plus the matching
+ * order-tracking-update email when the order has an email address on file,
+ * and
+ * implements the fallback behaviours from TOR §11.
  */
 class OrderService
 {
     public function __construct(
         protected StockService $stock,
         protected SmsNotificationService $sms,
+        protected EmailNotificationService $email,
     ) {}
+
+    /**
+     * Sent once, right after checkout, for both payment methods (CheckoutService
+     * calls this directly since it happens before any payment outcome exists
+     * to route through markPaid/markPaymentFailed above).
+     */
+    public function notifyPlaced(Order $order): void
+    {
+        $this->notify($order, OrderEventType::OrderPlaced);
+    }
 
     /**
      * TOR §11 "Payment successful but stock insufficient (race condition)
@@ -50,7 +64,7 @@ class OrderService
             if (! $stockOk) {
                 $this->transition($order, OrderStatus::OnHold, note: 'Payment succeeded but stock became insufficient after checkout.');
                 $order->update(['on_hold_reason' => 'One or more items sold out after your payment was received.']);
-                $this->sms->sendOrderEvent($order->fresh(), OrderEventType::OrderOnHold);
+                $this->notify($order->fresh(), OrderEventType::OrderOnHold);
                 $this->notifyInventoryOfficers($order, 'Order '.$order->order_number.' is ON HOLD - insufficient stock after payment.');
 
                 return $order->fresh();
@@ -60,11 +74,12 @@ class OrderService
             // (TOR §6.4). The Inventory Officer then moves it to Processing
             // themselves once they start preparing it - "all fulfilment is
             // handled directly by CY-Market" (TOR §6.4).
-            $this->transition($order, OrderStatus::Paid, note: 'Payment confirmed by MTN MoMo.');
+            $gatewayLabel = $payment->provider === 'manual' ? 'pay-by-transfer (confirmed by staff)' : 'MTN MoMo';
+            $this->transition($order, OrderStatus::Paid, note: "Payment confirmed by {$gatewayLabel}.");
             $order->update(['paid_at' => now()]);
 
-            $this->sms->sendOrderEvent($order->fresh(), OrderEventType::PaymentReceived);
-            $this->sms->sendOrderEvent($order->fresh(), OrderEventType::OrderConfirmed);
+            $this->notify($order->fresh(), OrderEventType::PaymentReceived);
+            $this->notify($order->fresh(), OrderEventType::OrderConfirmed);
 
             return $order->fresh();
         });
@@ -87,7 +102,7 @@ class OrderService
                 $this->stock->releaseForOrder($order, 'Payment attempt failed.');
             }
 
-            $this->sms->sendOrderEvent($order, OrderEventType::PaymentFailed);
+            $this->notify($order, OrderEventType::PaymentFailed);
 
             return $order->fresh();
         });
@@ -128,7 +143,7 @@ class OrderService
             };
 
             if ($event) {
-                $this->sms->sendOrderEvent($order->fresh(), $event);
+                $this->notify($order->fresh(), $event);
             }
 
             return $order->fresh();
@@ -172,7 +187,7 @@ class OrderService
             }
 
             if ($notify) {
-                $this->sms->sendOrderEvent($order->fresh(), OrderEventType::OrderCancelled);
+                $this->notify($order->fresh(), OrderEventType::OrderCancelled);
             }
 
             return $order->fresh();
@@ -220,5 +235,17 @@ class OrderService
         }
 
         Log::warning($message, ['order_id' => $order->id]);
+    }
+
+    /**
+     * Every customer-facing order-lifecycle event goes through here so SMS
+     * (TOR §6.6, mandatory) and email (best-effort, only sent when the
+     * order has an address on file) always stay in sync - callers should
+     * never reach for $this->sms or $this->email individually.
+     */
+    protected function notify(Order $order, OrderEventType $event): void
+    {
+        $this->sms->sendOrderEvent($order, $event);
+        $this->email->sendOrderEvent($order, $event);
     }
 }

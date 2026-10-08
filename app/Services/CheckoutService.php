@@ -9,24 +9,26 @@ use App\Models\Coupon;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\User;
-use App\Services\Payments\PaymentGatewayInterface;
+use App\Services\Payments\PaymentGatewayResolver;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Cart & Checkout Service (TOR §5.2, §6.3). Orchestrates the pilot-baseline
  * checkout flow: validate cart -> compute delivery fee -> create order ->
- * soft-reserve stock -> hand off to the Payment Service.
+ * soft-reserve stock -> hand off to the Payment Service (MTN MoMo, or
+ * pay-by-transfer - see PaymentGatewayResolver).
  */
 class CheckoutService
 {
     public function __construct(
         protected CartService $carts,
         protected StockService $stock,
-        protected PaymentGatewayInterface $gateway,
+        protected PaymentGatewayResolver $gateways,
+        protected OrderService $orders,
     ) {}
 
     /**
-     * @param  array{recipient_name:string, phone:string, delivery_zone_id:?int, address_line:string, landmark:?string, latitude:?float, longitude:?float, notes:?string, coupon_code:?string, momo_number?:?string, guest_name:?string, guest_email:?string}  $delivery
+     * @param  array{recipient_name:string, phone:string, delivery_zone_id:?int, address_line:string, landmark:?string, latitude:?float, longitude:?float, notes:?string, coupon_code:?string, payment_method:string, momo_number?:?string, guest_name:?string, guest_email:?string}  $delivery
      * @return array{order: Order, redirect_url: string}
      *
      * @throws CheckoutException
@@ -45,7 +47,7 @@ class CheckoutService
             throw new CheckoutException(['Your cart is empty.']);
         }
 
-        return DB::transaction(function () use ($cart, $delivery, $user) {
+        $result = DB::transaction(function () use ($cart, $delivery, $user) {
             $subtotal = $cart->subtotal();
             $zone = isset($delivery['delivery_zone_id']) ? DeliveryZone::find($delivery['delivery_zone_id']) : null;
             $deliveryFee = $zone?->fee() ?? app(SettingsService::class)->deliveryFee();
@@ -86,14 +88,31 @@ class CheckoutService
                 ]);
             }
 
-            $this->stock->reserveForOrder($order->fresh('items'));
+            $method = $delivery['payment_method'] ?? 'momo';
+
+            // Pay-by-transfer holds stock far longer than MoMo's near-instant
+            // confirmation, since a staff member has to notice and confirm
+            // the transfer by hand (see SettingsService::manualPaymentReservationHours()).
+            $reservationMinutes = $method === 'manual'
+                ? app(SettingsService::class)->manualPaymentReservationHours() * 60
+                : null;
+
+            $this->stock->reserveForOrder($order->fresh('items'), $reservationMinutes);
 
             $cart->update(['status' => 'converted']);
 
-            $result = $this->gateway->initiateCheckout($order, $delivery['momo_number'] ?? null);
+            // Gateway initiation can still fail/throw (e.g. MTN rejects the
+            // request), which rolls the whole transaction back - the order
+            // row never ends up existing, so the "order placed" notification
+            // below only fires once this has committed successfully.
+            $gatewayResult = $this->gateways->forMethod($method)->initiateCheckout($order, $delivery['momo_number'] ?? null);
 
-            return ['order' => $order->fresh(), 'redirect_url' => $result['redirect_url']];
+            return ['order' => $order->fresh(), 'redirect_url' => $gatewayResult['redirect_url']];
         });
+
+        $this->orders->notifyPlaced($result['order']);
+
+        return $result;
     }
 
     /**

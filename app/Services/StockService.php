@@ -26,9 +26,9 @@ class StockService
      * customer completes payment. Uses a row lock per product to stay safe
      * under concurrent checkouts of the same popular item.
      */
-    public function reserveForOrder(Order $order): void
+    public function reserveForOrder(Order $order, ?int $minutesOverride = null): void
     {
-        $minutes = $this->settings->stockReservationMinutes();
+        $minutes = $minutesOverride ?? $this->settings->stockReservationMinutes();
 
         DB::transaction(function () use ($order, $minutes) {
             foreach ($order->items as $item) {

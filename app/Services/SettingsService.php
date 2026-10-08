@@ -52,6 +52,49 @@ class SettingsService
     }
 
     /**
+     * How long a "pay by transfer" order holds its stock reservation while
+     * waiting for a staff member to confirm the payment manually - much
+     * longer than the MoMo window since a human has to notice it land.
+     */
+    public function manualPaymentReservationHours(): int
+    {
+        return (int) $this->get('manual_payment_reservation_hours', config('cymarket.manual_payment_reservation_hours'));
+    }
+
+    public function manualPaymentAccountName(): string
+    {
+        return (string) $this->get('manual_payment_account_name', '');
+    }
+
+    public function manualPaymentAccountNumber(): string
+    {
+        return (string) $this->get('manual_payment_account_number', '');
+    }
+
+    public function manualPaymentNetwork(): string
+    {
+        return (string) $this->get('manual_payment_network', 'MTN Mobile Money');
+    }
+
+    public function manualPaymentInstructions(): string
+    {
+        return (string) $this->get(
+            'manual_payment_instructions',
+            'Send the exact total to the account below using your order number as the reference, then come back here - no need to upload anything, but a screenshot helps us confirm faster.'
+        );
+    }
+
+    /**
+     * Whether a Super Admin has actually filled in the pay-by-transfer
+     * account details yet - the storefront hides the option until they
+     * have, rather than sending customers to a blank instructions page.
+     */
+    public function manualPaymentConfigured(): bool
+    {
+        return filled($this->manualPaymentAccountName()) && filled($this->manualPaymentAccountNumber());
+    }
+
+    /**
      * SMS template with {placeholders} for an order event. Falls back to a
      * sensible default so notifications work before Super Admin customises
      * them from Admin > Settings.

@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Services\CartService;
 use App\Services\CheckoutService;
 use App\Services\Payments\PaymentGatewayInterface;
+use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -38,8 +39,9 @@ class CheckoutController extends Controller
 
         $zones = DeliveryZone::active()->orderBy('name')->get();
         $defaultAddress = $request->user()?->defaultAddress;
+        $manualPaymentAvailable = app(SettingsService::class)->manualPaymentConfigured();
 
-        return view('storefront.checkout.index', compact('cart', 'issues', 'zones', 'defaultAddress'));
+        return view('storefront.checkout.index', compact('cart', 'issues', 'zones', 'defaultAddress', 'manualPaymentAvailable'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -48,7 +50,8 @@ class CheckoutController extends Controller
         $request->merge(['momo_number' => preg_replace('/[\s-]+/', '', (string) $request->input('momo_number')) ?: null]);
 
         $rules = [
-            'momo_number' => ['nullable', 'regex:/^(\+?233|0)?[235]\d{8}$/'],
+            'payment_method' => ['required', 'in:momo,manual'],
+            'momo_number' => ['required_if:payment_method,momo', 'nullable', 'regex:/^(\+?233|0)?[235]\d{8}$/'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
             'delivery_zone_id' => ['nullable', 'exists:delivery_zones,id'],
@@ -63,6 +66,14 @@ class CheckoutController extends Controller
         if (! $request->user()) {
             $rules['guest_name'] = ['required', 'string', 'max:255'];
             $rules['guest_email'] = ['nullable', 'email', 'max:255'];
+        }
+
+        if ($request->input('payment_method') === 'manual' && ! app(SettingsService::class)->manualPaymentConfigured()) {
+            // Account details were turned off/cleared between the page
+            // loading and the customer submitting - fall back rather than
+            // sending them to a blank instructions page.
+            $request->merge(['payment_method' => 'momo']);
+            $rules['momo_number'][] = 'required';
         }
 
         $data = $request->validate($rules);
@@ -133,5 +144,49 @@ class CheckoutController extends Controller
         ]);
 
         return redirect()->route('checkout.return', $reference);
+    }
+
+    /**
+     * GET /checkout/manual-pay/{reference} - the "pay by transfer"
+     * instructions page: account details, the order reference to quote,
+     * and an optional proof-of-payment upload. Nothing here confirms the
+     * order; a staff member does that from Admin > Payments once they see
+     * the transfer land (see ManualPaymentService).
+     */
+    public function manualPay(string $reference)
+    {
+        $payment = Payment::with('order')->where('reference', $reference)->where('provider', 'manual')->firstOrFail();
+        $settings = app(SettingsService::class);
+
+        return view('storefront.checkout.manual-pay', [
+            'payment' => $payment,
+            'accountName' => $settings->manualPaymentAccountName(),
+            'accountNumber' => $settings->manualPaymentAccountNumber(),
+            'network' => $settings->manualPaymentNetwork(),
+            'instructions' => $settings->manualPaymentInstructions(),
+        ]);
+    }
+
+    /**
+     * Optional - a screenshot/receipt attached here doesn't change the
+     * payment's status by itself, it just gives staff something to match
+     * against when they confirm it from Admin > Payments.
+     */
+    public function manualProofUpload(Request $request, string $reference): RedirectResponse
+    {
+        $payment = Payment::where('reference', $reference)->where('provider', 'manual')->firstOrFail();
+
+        if ($payment->status !== PaymentStatus::Pending) {
+            return redirect()->route('orders.show', $payment->order)->with('info', 'This payment has already been resolved.');
+        }
+
+        $request->validate([
+            'proof' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        $path = $request->file('proof')->store('payment-proofs', 'public');
+        $payment->update(['proof_path' => $path]);
+
+        return redirect()->route('checkout.manual-pay', $reference)->with('success', 'Thanks! We will confirm your payment shortly.');
     }
 }

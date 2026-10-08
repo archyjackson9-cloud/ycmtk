@@ -47,20 +47,33 @@
 
     {{-- Pending Payment Notice --}}
     @if($order->status === \App\Enums\OrderStatus::PendingPayment)
+        @php($pendingPayment = $order->latestPayment())
+        @php($isManual = $pendingPayment?->provider === 'manual')
         <div class="liquid-glass rounded-[28px] p-6 mb-8 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <div class="h-10 w-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <div>
-                    <h3 class="text-xs font-bold text-gray-900">Awaiting MTN MoMo Approval</h3>
-                    <p class="text-[11px] text-gray-500">Approve the payment prompt on your phone with your MoMo PIN. Stock is reserved for a short time.</p>
+                    <h3 class="text-xs font-bold text-gray-900">{{ $isManual ? 'Awaiting Payment Confirmation' : 'Awaiting MTN MoMo Approval' }}</h3>
+                    <p class="text-[11px] text-gray-500">
+                        @if($isManual)
+                            We will confirm your transfer on our end once it lands. Stock is reserved while we do.
+                        @else
+                            Approve the payment prompt on your phone with your MoMo PIN. Stock is reserved for a short time.
+                        @endif
+                    </p>
                 </div>
             </div>
-            <form action="{{ route('orders.cancel', $order) }}" method="POST" onsubmit="return confirm('Cancel this order and release stock?')">
-                @csrf
-                <button type="submit" class="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors">Cancel Order</button>
-            </form>
+            <div class="flex items-center gap-3 shrink-0">
+                @if($isManual)
+                    <a href="{{ route('checkout.manual-pay', $pendingPayment->reference) }}" class="text-xs font-bold text-brand-700 hover:text-brand-900 transition-colors">View Payment Details</a>
+                @endif
+                <form action="{{ route('orders.cancel', $order) }}" method="POST" onsubmit="return confirm('Cancel this order and release stock?')">
+                    @csrf
+                    <button type="submit" class="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors">Cancel Order</button>
+                </form>
+            </div>
         </div>
     @endif
 
@@ -135,11 +148,14 @@
                 <div class="liquid-glass rounded-[28px] p-6 shadow-xs space-y-3">
                     <h2 class="text-xs font-extrabold uppercase tracking-wider text-gray-900 flex items-center gap-2">
                         <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                        MTN MoMo Payment
+                        Payment
                     </h2>
                     @foreach($order->payments as $payment)
                         <div class="flex items-center justify-between text-xs py-1.5 border-b border-gray-100 last:border-0">
-                            <span class="text-gray-400 font-medium">{{ $payment->created_at->format('d M, H:i') }}</span>
+                            <span class="text-gray-400 font-medium">
+                                {{ $payment->provider === 'manual' ? 'Bank/MoMo Transfer' : 'MTN MoMo' }}
+                                · {{ $payment->created_at->format('d M, H:i') }}
+                            </span>
                             <span class="{{ $payment->status->badgeClasses() }} px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                                 {{ $payment->status->label() }}
                             </span>
@@ -148,9 +164,16 @@
 
                     @if($order->status === \App\Enums\OrderStatus::PendingPayment && $order->latestPayment()?->status === \App\Enums\PaymentStatus::Pending)
                         @php($pendingPayment = $order->latestPayment())
-                        @if(config('momo.mode', 'simulate') !== 'live')
+                        @if($pendingPayment->provider === 'manual')
                             <div class="pt-2">
-                                <a href="{{ route('checkout.sandbox-pay', $pendingPayment->reference) }}" 
+                                <a href="{{ route('checkout.manual-pay', $pendingPayment->reference) }}"
+                                   class="block text-center bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full py-2.5 shadow-xs transition-all">
+                                    View Payment Details →
+                                </a>
+                            </div>
+                        @elseif(config('momo.mode', 'simulate') !== 'live')
+                            <div class="pt-2">
+                                <a href="{{ route('checkout.sandbox-pay', $pendingPayment->reference) }}"
                                    class="block text-center bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full py-2.5 shadow-xs transition-all">
                                     Simulate Sandbox Payment →
                                 </a>
@@ -165,8 +188,12 @@
 
 </div>
 
-{{-- While MoMo approval is pending, poll for the outcome and reload once it resolves. --}}
-@if($order->status === \App\Enums\OrderStatus::PendingPayment && $order->latestPayment()?->status === \App\Enums\PaymentStatus::Pending && config('momo.mode') === 'live')
+{{-- While payment is pending, poll for the outcome and reload once it
+     resolves - for a live MTN MoMo prompt, and always for a manual transfer
+     since that can only change via a staff confirmation elsewhere. --}}
+@if($order->status === \App\Enums\OrderStatus::PendingPayment
+    && $order->latestPayment()?->status === \App\Enums\PaymentStatus::Pending
+    && ($order->latestPayment()?->provider === 'manual' || config('momo.mode') === 'live'))
     @push('scripts')
         <script>
             (function () {
