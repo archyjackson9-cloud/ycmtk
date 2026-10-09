@@ -60,7 +60,7 @@ class CheckoutController extends Controller
         if (! app(SettingsService::class)->manualPaymentConfigured()) {
             // No live payment method right now - better to stop here with a
             // clear message than let staff discover it via a broken order.
-            return redirect()->route('checkout.index')->with('error', 'Checkout is not available right now - please contact us or try again shortly.');
+            return redirect()->route('checkout.index')->with('error', 'Checkout is not available yet - payment details have not been configured. (Admin: set this up in Settings > "Pay by Transfer".)');
         }
 
         $rules = [
