@@ -273,6 +273,33 @@ product reviews, wishlist, coupons, banners, product variants, and the
 Marketing Admin role. Building these out is a natural next step once the
 pilot validates Phase 1.
 
+## PWA (installable storefront + admin panel)
+
+Both the storefront and the admin panel are installable (`manifest.webmanifest`,
+`public/sw.js`, icons in `public/icons/`) - Chrome/Edge/Android show an
+"Install" prompt automatically (also offered via the small banner in the
+corner of the storefront), and iOS adds it through Safari's share sheet >
+"Add to Home Screen" (no programmatic prompt exists on iOS - this is a
+platform limitation, not something this app can change).
+
+**The service worker only ever caches static assets** - built CSS/JS
+(`/build/*`), uploaded images (`/storage/*`), and the icons - plus one
+offline fallback page. It never caches `/admin`, any POST, or any other
+dynamic page, specifically so stock/prices/cart state and Livewire never go
+stale or break from being served out of a cache. See the comment at the
+top of `public/sw.js` for the reasoning.
+
+**Requires HTTPS** (or `localhost` for local testing) - browsers refuse to
+register a service worker over plain `http://` on a real domain. This
+already works once the app is behind the Caddy reverse proxy from
+`DEPLOYMENT.md`; it won't install when visited over the VPS's bare IP.
+
+**After changing `public/sw.js`**, bump `CACHE_VERSION` at the top of the
+file - that's what makes browsers with the old service worker cached pick
+up the new one and clear out stale cache entries.
+
+Covered by `tests/Feature/PwaTest.php`.
+
 ## 12. Known follow-ups
 
 - Real product photography can replace the generated placeholder images at

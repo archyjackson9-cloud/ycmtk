@@ -129,13 +129,14 @@ checks for that flag.
 
 ## 8. HTTPS
 
-The `app` container serves plain HTTP on the port set by `APP_PORT` in
-`.env` (default `80`). This repo doesn't include a TLS-terminating reverse
-proxy, since that depends on what Hostinger's Docker Manager provides on
-your plan — check whether it has a built-in "issue SSL for this
-container/port" option first. If it doesn't, the common fallback is running
-Caddy, Traefik, or nginx+certbot as one more service in front of `app`; ask
-if you'd like that added once you know which path you're on.
+A `caddy` service in `docker-compose.yml` sits in front of `app`, publishes
+ports 80/443, and gets/renews a Let's Encrypt certificate automatically for
+`${SITE_DOMAIN:-cy-market.com}` - `app` itself is `expose`d (internal-only,
+no host port). Set `SITE_DOMAIN` to your real domain in `.env` if it isn't
+already `cy-market.com`, and make sure its DNS `A` record points at this
+VPS before first deploy (Let's Encrypt needs to reach it to verify). This
+is also what makes the PWA installable (browsers refuse to register a
+service worker over plain `http://` on a real domain) - see `SETUP.md`.
 
 ## Redeploying after code changes
 

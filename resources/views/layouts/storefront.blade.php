@@ -6,7 +6,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'CY-Market') — Farm-Fresh Produce, Delivered</title>
     <meta name="description" content="CY-Market — farm-grown produce and provisions delivered fresh across Tarkwa and surrounding communities.">
-    
+
+    {{-- PWA: installable storefront, see public/sw.js --}}
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#14532d">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CY-Market">
+
     <!-- Preconnect Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -268,6 +277,62 @@
             })();
         </script>
     @endauth
+
+    {{-- PWA install prompt - Chrome/Android/Desktop only; iOS has no
+         programmatic prompt, but the manifest/icons above already make
+         "Add to Home Screen" from Safari's share sheet work correctly. --}}
+    <div id="pwa-install-banner" class="hidden fixed bottom-4 inset-x-4 sm:inset-x-auto sm:right-4 sm:left-auto sm:w-80 z-50 liquid-glass rounded-2xl shadow-lg p-4 flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white font-black text-xs shrink-0">CY</div>
+        <div class="flex-1 min-w-0">
+            <p class="text-xs font-extrabold text-gray-900">Install CY-Market</p>
+            <p class="text-[11px] text-gray-500">Add to your home screen for quick access.</p>
+        </div>
+        <button type="button" id="pwa-install-dismiss" aria-label="Dismiss" class="text-gray-400 hover:text-gray-600 text-sm px-1">✕</button>
+        <button type="button" id="pwa-install-accept" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full px-3 py-2 shrink-0 transition-colors">Install</button>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').catch(function () {
+                    // Registration can fail harmlessly (e.g. no HTTPS in local dev) - the site still works normally.
+                });
+            });
+        }
+
+        (function () {
+            var DISMISS_KEY = 'cymarket_pwa_install_dismissed';
+            var banner = document.getElementById('pwa-install-banner');
+            var deferredPrompt = null;
+
+            window.addEventListener('beforeinstallprompt', function (e) {
+                e.preventDefault();
+                deferredPrompt = e;
+
+                if (banner && localStorage.getItem(DISMISS_KEY) !== '1') {
+                    banner.classList.remove('hidden');
+                }
+            });
+
+            document.getElementById('pwa-install-dismiss')?.addEventListener('click', function () {
+                banner.classList.add('hidden');
+                try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) {}
+            });
+
+            document.getElementById('pwa-install-accept')?.addEventListener('click', function () {
+                banner.classList.add('hidden');
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt = null;
+                }
+            });
+
+            window.addEventListener('appinstalled', function () {
+                if (banner) banner.classList.add('hidden');
+                try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) {}
+            });
+        })();
+    </script>
 
     @stack('scripts')
 </body>

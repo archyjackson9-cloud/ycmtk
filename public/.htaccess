@@ -1,3 +1,10 @@
+<IfModule mod_mime.c>
+    # Not every server's mime.types maps this extension; declared explicitly
+    # so the PWA manifest is served with the right type regardless of host
+    # (local XAMPP or the Docker/Apache image).
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

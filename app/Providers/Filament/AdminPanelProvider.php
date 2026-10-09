@@ -51,6 +51,12 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): View => view('filament.topbar-theme-switcher'),
             )
+            // PWA - lets staff "install" the admin panel too, sharing the
+            // storefront's manifest/service worker (see public/sw.js).
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): View => view('filament.pwa-head'),
+            )
             // Staff bell - Super Admin/Inventory Officer get a NewOrderPlaced
             // alert the moment a customer checks out (see OrderService).
             ->databaseNotifications()
