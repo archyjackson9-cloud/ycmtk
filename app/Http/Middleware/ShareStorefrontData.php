@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Shares the mega-menu category tree and current cart item count with every
+ * Shares the mega-menu category tree, current cart item count, and (for a
+ * logged-in customer) their recent in-app notifications with every
  * storefront view (TOR §8.1 "category mega-menu", persistent/sticky cart
- * summary).
+ * summary, order-tracking-update bell).
  */
 class ShareStorefrontData
 {
@@ -27,6 +28,13 @@ class ShareStorefrontData
 
         $cart = app(CartService::class)->currentCart($request->user(), $request->session()->getId());
         View::share('cartItemCount', $cart->items()->sum('quantity'));
+
+        // Guests have no account to show a bell in - keep the query off
+        // every anonymous storefront request.
+        if ($user = $request->user()) {
+            View::share('recentNotifications', $user->notifications()->latest()->limit(8)->get());
+            View::share('unreadNotificationCount', $user->unreadNotifications()->count());
+        }
 
         return $next($request);
     }

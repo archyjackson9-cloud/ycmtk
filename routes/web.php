@@ -11,6 +11,7 @@ use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CategoryController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\HomeController;
+use App\Http\Controllers\Storefront\NotificationController;
 use App\Http\Controllers\Storefront\OrderController;
 use App\Http\Controllers\Storefront\ProductController;
 use App\Http\Controllers\Webhooks\MtnMomoWebhookController;
@@ -52,6 +53,9 @@ Route::middleware('storefront')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/my-orders', [OrderController::class, 'index'])->name('orders.index');
+
+        Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
+        Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
         Route::get('/account', [AccountController::class, 'edit'])->name('account.edit');
         Route::patch('/account', [AccountController::class, 'update'])->name('account.update');

@@ -10,19 +10,21 @@ use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\Payment;
 use App\Models\User;
+use App\Notifications\NewOrderPlaced;
+use App\Notifications\OrderStatusUpdated;
 use App\Services\Notifications\EmailNotificationService;
 use App\Services\Notifications\SmsNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use RuntimeException;
 
 /**
  * Order Management & Lifecycle Service (TOR §5.2, §6.4). Owns every
- * status transition, keeps the audit trail (order_status_histories),
- * fires the mandatory SMS triggers (TOR §6.6) plus the matching
- * order-tracking-update email when the order has an email address on file,
- * and
- * implements the fallback behaviours from TOR §11.
+ * status transition, keeps the audit trail (order_status_histories), fires
+ * the mandatory SMS triggers (TOR §6.6) plus the matching email and in-app
+ * (bell) notification whenever the order has an address/account to send
+ * them to, and implements the fallback behaviours from TOR §11.
  */
 class OrderService
 {
@@ -35,11 +37,14 @@ class OrderService
     /**
      * Sent once, right after checkout, for both payment methods (CheckoutService
      * calls this directly since it happens before any payment outcome exists
-     * to route through markPaid/markPaymentFailed above).
+     * to route through markPaid/markPaymentFailed above). Also alerts staff -
+     * particularly important for a pay-by-transfer order, since nothing else
+     * prompts anyone to go confirm it.
      */
     public function notifyPlaced(Order $order): void
     {
         $this->notify($order, OrderEventType::OrderPlaced);
+        $this->notifyStaffOfNewOrder($order);
     }
 
     /**
@@ -239,13 +244,33 @@ class OrderService
 
     /**
      * Every customer-facing order-lifecycle event goes through here so SMS
-     * (TOR §6.6, mandatory) and email (best-effort, only sent when the
-     * order has an address on file) always stay in sync - callers should
-     * never reach for $this->sms or $this->email individually.
+     * (TOR §6.6, mandatory), email, and the storefront's in-app bell
+     * (both best-effort, only sent when there's an address/account to send
+     * them to) always stay in sync - callers should never reach for
+     * $this->sms/$this->email, or notify $order->user directly, themselves.
      */
     protected function notify(Order $order, OrderEventType $event): void
     {
         $this->sms->sendOrderEvent($order, $event);
         $this->email->sendOrderEvent($order, $event);
+
+        // Guests have no account to show a bell in.
+        $order->user?->notify(new OrderStatusUpdated($order, $event));
+    }
+
+    /**
+     * In-app (bell) alert for Super Admin / Inventory Officer in the
+     * Filament panel - the staff who can act on a new order (confirm a
+     * pay-by-transfer payment, start fulfilment).
+     */
+    protected function notifyStaffOfNewOrder(Order $order): void
+    {
+        $staff = User::role([config('cymarket.roles.super_admin'), config('cymarket.roles.inventory_officer')])
+            ->where('is_active', true)
+            ->get();
+
+        if ($staff->isNotEmpty()) {
+            Notification::send($staff, new NewOrderPlaced($order));
+        }
     }
 }

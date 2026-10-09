@@ -241,13 +241,32 @@ real `cymarket` database and need no extra setup.
 ## 11. What's built vs. scaffolded
 
 **Fully built (Phase 1, per the agreed scope):** product catalogue with
-categories/seasonality/low-stock, cart, guest + registered checkout, MTN MoMo
-sandbox payment flow, SMS-first notifications (log mode), the full order
-lifecycle with audit trail, soft stock reservation with race-condition
-handling, the Filament admin panel (Products, Categories, Orders, Users,
-Delivery Zones, Payments, Stock Movements, Notification Logs, a Settings
-page, and a KPI/sales/low-stock dashboard), and RBAC for Super Admin,
-Inventory Officer and (read-only) Support Agent.
+categories/seasonality/low-stock, cart, guest + registered checkout,
+pay-by-transfer payment flow (MTN MoMo dormant, see §7/§8), SMS + email +
+in-app bell notifications, the full order lifecycle with audit trail, soft
+stock reservation with race-condition handling, the Filament admin panel
+(Products, Categories, Orders, Users, Delivery Zones, Payments, Stock
+Movements, Notification Logs, a Settings page, a staff notification bell,
+and a KPI/sales/low-stock dashboard), and RBAC for Super Admin, Inventory
+Officer and (read-only) Support Agent.
+
+### In-app (bell) notifications
+
+Two one-way alerts, both via Laravel's standard `notifications` table
+(`App\Notifications\NewOrderPlaced`, `App\Notifications\OrderStatusUpdated`
+- see `OrderService::notify()`/`notifyStaffOfNewOrder()`):
+
+- **Staff** (Super Admin, Inventory Officer) get a bell alert in the admin
+  panel the moment any order is placed - the Filament topbar bell, enabled
+  via `->databaseNotifications()` in `AdminPanelProvider`. Particularly
+  useful for pay-by-transfer orders, since nothing else prompts staff to
+  go confirm one.
+- **Registered customers** get a bell on the storefront (next to the cart
+  pill, top-right once logged in) for every lifecycle event on their own
+  orders - same event set as SMS/email. Guests have no account to show a
+  bell in, so they rely on SMS/email/tracking-by-reference only.
+
+Tested end-to-end in `tests/Feature/InAppNotificationTest.php`.
 
 **Scaffolded for Phase 2 (schema + models only, no dedicated UI yet):**
 product reviews, wishlist, coupons, banners, product variants, and the

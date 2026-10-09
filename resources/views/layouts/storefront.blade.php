@@ -77,6 +77,41 @@
             {{-- Action Buttons --}}
             <div class="flex items-center gap-3 shrink-0 text-sm">
                 @auth
+                    {{-- Notification Bell - order-tracking updates for registered customers --}}
+                    <div class="relative">
+                        <button type="button" id="notif-bell-toggle" aria-label="Notifications" aria-expanded="false"
+                                class="relative inline-flex items-center justify-center h-9 w-9 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            @if(($unreadNotificationCount ?? 0) > 0)
+                                <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-xs">
+                                    {{ $unreadNotificationCount > 9 ? '9+' : $unreadNotificationCount }}
+                                </span>
+                            @endif
+                        </button>
+                        <div id="notif-bell-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[90vw] liquid-glass rounded-2xl shadow-lg overflow-hidden z-50">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-gray-700">Notifications</span>
+                                @if(($unreadNotificationCount ?? 0) > 0)
+                                    <form method="POST" action="{{ route('notifications.read-all') }}">
+                                        @csrf
+                                        <button type="submit" class="text-[11px] font-bold text-brand-700 hover:text-brand-900">Mark all read</button>
+                                    </form>
+                                @endif
+                            </div>
+                            <div class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                                @forelse(($recentNotifications ?? []) as $notification)
+                                    <a href="{{ route('notifications.open', $notification->id) }}" class="block px-4 py-3 text-xs hover:bg-gray-50 transition-colors {{ $notification->read_at ? '' : 'bg-brand-50/50' }}">
+                                        <p class="font-bold text-gray-900">{{ $notification->data['title'] ?? 'Update' }}</p>
+                                        <p class="text-gray-500 mt-0.5">{{ $notification->data['message'] ?? '' }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </a>
+                                @empty
+                                    <p class="px-4 py-6 text-xs text-gray-400 text-center">No notifications yet.</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
                     <a href="{{ route('account.edit') }}" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-gray-100 text-gray-700 font-medium transition-colors">
                         <span class="h-6 w-6 rounded-full bg-brand-100 text-brand-800 flex items-center justify-center text-xs font-bold">
                             {{ Str::substr(auth()->user()->name, 0, 1) }}
@@ -209,6 +244,30 @@
             </div>
         </div>
     </footer>
+
+    @auth
+        {{-- Notification bell toggle (no Alpine on the storefront) --}}
+        <script>
+            (function () {
+                var toggle = document.getElementById('notif-bell-toggle');
+                var panel = document.getElementById('notif-bell-panel');
+                if (!toggle || !panel) return;
+
+                toggle.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var hidden = panel.classList.toggle('hidden');
+                    toggle.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!panel.contains(e.target) && e.target !== toggle) {
+                        panel.classList.add('hidden');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            })();
+        </script>
+    @endauth
 
     @stack('scripts')
 </body>
