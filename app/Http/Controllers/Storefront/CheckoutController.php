@@ -17,6 +17,12 @@ use Illuminate\Http\Request;
 /**
  * Single-page checkout (TOR §6.3, §8.1: "Cart -> Delivery -> Payment ->
  * Confirmation" step indicator, guest checkout retained).
+ *
+ * Pay-by-transfer ("manual") is the only payment method offered for now -
+ * MTN MoMo integration (MtnMomoPaymentService, the webhook, the simulate
+ * routes below) is complete and tested but dormant: getting real MTN API
+ * credentials is on hold, so nothing in the storefront offers it. It's a
+ * config/UI change to bring back, not a rebuild - see PaymentGatewayResolver.
  */
 class CheckoutController extends Controller
 {
@@ -39,19 +45,25 @@ class CheckoutController extends Controller
 
         $zones = DeliveryZone::active()->orderBy('name')->get();
         $defaultAddress = $request->user()?->defaultAddress;
-        $manualPaymentAvailable = app(SettingsService::class)->manualPaymentConfigured();
+        $settings = app(SettingsService::class);
+        $manualPaymentAvailable = $settings->manualPaymentConfigured();
 
-        return view('storefront.checkout.index', compact('cart', 'issues', 'zones', 'defaultAddress', 'manualPaymentAvailable'));
+        return view('storefront.checkout.index', compact('cart', 'issues', 'zones', 'defaultAddress', 'manualPaymentAvailable') + [
+            'accountName' => $settings->manualPaymentAccountName(),
+            'accountNumber' => $settings->manualPaymentAccountNumber(),
+            'network' => $settings->manualPaymentNetwork(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        // Accept "024 123 4567" style input for the MoMo number.
-        $request->merge(['momo_number' => preg_replace('/[\s-]+/', '', (string) $request->input('momo_number')) ?: null]);
+        if (! app(SettingsService::class)->manualPaymentConfigured()) {
+            // No live payment method right now - better to stop here with a
+            // clear message than let staff discover it via a broken order.
+            return redirect()->route('checkout.index')->with('error', 'Checkout is not available right now - please contact us or try again shortly.');
+        }
 
         $rules = [
-            'payment_method' => ['required', 'in:momo,manual'],
-            'momo_number' => ['required_if:payment_method,momo', 'nullable', 'regex:/^(\+?233|0)?[235]\d{8}$/'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
             'delivery_zone_id' => ['nullable', 'exists:delivery_zones,id'],
@@ -68,15 +80,10 @@ class CheckoutController extends Controller
             $rules['guest_email'] = ['nullable', 'email', 'max:255'];
         }
 
-        if ($request->input('payment_method') === 'manual' && ! app(SettingsService::class)->manualPaymentConfigured()) {
-            // Account details were turned off/cleared between the page
-            // loading and the customer submitting - fall back rather than
-            // sending them to a blank instructions page.
-            $request->merge(['payment_method' => 'momo']);
-            $rules['momo_number'][] = 'required';
-        }
-
         $data = $request->validate($rules);
+        // Pay-by-transfer is the only method offered - not a client-supplied
+        // value, so there's nothing for a tampered request to override.
+        $data['payment_method'] = 'manual';
 
         $cart = $this->carts->currentCart($request->user(), $request->session()->getId());
 

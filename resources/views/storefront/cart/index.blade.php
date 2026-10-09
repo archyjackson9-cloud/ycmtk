@@ -144,7 +144,7 @@
                     <div class="pt-3 border-t border-gray-100 text-center space-y-2">
                         <p class="text-[10px] uppercase tracking-wider font-extrabold text-gray-400">Guaranteed Safe Checkout</p>
                         <div class="flex items-center justify-center gap-2 text-xs font-bold text-gray-600">
-                                                        <span class="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-[11px]">MTN MoMo</span>
+                                                        <span class="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-[11px]">Pay by Transfer</span>
                         </div>
                     </div>
                 </div>

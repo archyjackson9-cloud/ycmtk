@@ -88,7 +88,7 @@ class CheckoutService
                 ]);
             }
 
-            $method = $delivery['payment_method'] ?? 'momo';
+            $method = $delivery['payment_method'] ?? 'manual';
 
             // Pay-by-transfer holds stock far longer than MoMo's near-instant
             // confirmation, since a staff member has to notice and confirm

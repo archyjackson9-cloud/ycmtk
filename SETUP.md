@@ -112,48 +112,60 @@ data only — change every one of these before any real deployment.
 | Support Agent | support@cymarket.test | Read-only order visibility in the admin panel |
 | Customer (x8) | ama.serwaa@example.test, kofi.adjei@example.test, abena.frimpong@example.test, yaw.asante@example.test, adwoa.nyarko@example.test, kwesi.darko@example.test, akua.boadi@example.test, kwame.antwi@example.test | Storefront login, each has a saved Tarkwa-area delivery address |
 
-## 7. Testing checkout end-to-end (sandbox mode, zero credentials)
+## 7. Testing checkout end-to-end (zero credentials)
 
-`MOMO_MODE=simulate` (the default) replaces the real MTN MoMo prompt with a
-local "Approve / Decline" page so you can exercise the complete order
-lifecycle without any MTN account:
+**Pay by transfer is currently the only payment method the storefront
+offers.** MTN MoMo integration (`MtnMomoPaymentService`, its webhook, the
+simulate routes) is complete and tested but dormant - getting real MTN API
+credentials is on hold for now, so checkout never creates a MoMo payment
+regardless of what's posted to it. It's a controller change to bring back
+later (`App\Http\Controllers\Storefront\CheckoutController::store()`), not
+a rebuild - see `PaymentGatewayResolver`.
 
-1. Browse the storefront, add products to the cart, go to Checkout.
-2. Fill in delivery details and submit — you'll land on a sandbox payment
-   page instead of a real MoMo prompt.
-3. Click **Approve** — the order is marked Paid, stock is deducted, and an
-   SMS is "sent" (written to `storage/logs/sms-*.log` since `SMS_MODE=log`).
-   Click **Decline** instead to test the payment-failed fallback (order
-   stays Pending Payment, cart/reservation is preserved for retry).
-4. In the admin panel (as the Super Admin or an Inventory Officer), open
-   **Sales → Orders** to move the order through Processing → Dispatched →
-   Delivered → Completed, or Cancel it. Every transition is logged to the
-   order's audit trail and triggers another simulated SMS.
+1. Fill in **Admin > Settings > "Pay by Transfer"**: account name, account
+   number, network/bank name. Checkout is blocked with a clear message
+   until this is done - there's no fallback method right now.
+2. Browse the storefront, add products to the cart, go to Checkout, fill
+   in delivery details and submit - you'll land on an instructions page
+   showing the account to pay and the order's reference number.
+3. In the admin panel (as the Super Admin), open **Sales → Payments** and
+   use the **Confirm Payment** row action on that order's pending row
+   (optionally recording the amount actually received and a reference
+   note). The order is marked Paid, stock is deducted, and an SMS + email
+   are "sent" (written to `storage/logs/sms-*.log` since `SMS_MODE=log`,
+   and to the log per `MAIL_MAILER=log`). Use **Reject** instead to test
+   the payment-failed fallback (order stays Pending Payment, reservation
+   released, customer can retry).
+4. Open **Sales → Orders** to move the order through Processing →
+   Dispatched → Delivered → Completed, or Cancel it. Every transition is
+   logged to the order's audit trail and triggers another SMS + email.
 
-Because this is a real webhook-style flow (`MtnMomoPaymentService::
-handleCallback()`), it is idempotent — replaying the same confirmation
-twice will not double-charge stock or double-send SMS. This exact scenario
-is covered by `tests/Feature/CheckoutFlowTest.php` and
-`tests/Feature/MtnMomoWebhookTest.php` and `tests/Feature/MtnMomoLiveTest.php`.
+Confirming/rejecting is idempotent (replaying it doesn't double-charge
+stock or double-send notifications) - covered by
+`tests/Feature/ManualPaymentTest.php` and
+`tests/Feature/OrderNotificationEmailTest.php`.
 
-### Pay by transfer (second payment method) and tracking-update emails
+### MTN MoMo (dormant) and tracking-update emails
 
-Checkout also offers "Bank / MoMo Transfer" once an account is configured
-at Admin > Settings > "Pay by Transfer". Placing an order that way sends
-the customer to an instructions page (`storage` holds the optional proof
-screenshot they can attach) instead of a MoMo prompt; nothing confirms it
-automatically — open Admin > Payments and use the **Confirm Payment** /
-**Reject** row actions on the pending row (`tests/Feature/ManualPaymentTest.php`).
+The MTN MoMo gateway, webhook and simulate pages still exist and are still
+tested (`tests/Feature/MtnMomoWebhookTest.php`,
+`tests/Feature/MtnMomoLiveTest.php`) - they're just not reachable from the
+storefront while it's turned off. See "Bringing MTN MoMo back" below.
 
-Every order-lifecycle event also sends a matching email (not just SMS)
-when the order has an address on file — `MAIL_MAILER=log` (the default)
-writes these to the log instead of a real inbox, so this needs no setup
-either (`tests/Feature/OrderNotificationEmailTest.php`).
+Every order-lifecycle event sends a matching email (not just SMS) when the
+order has an address on file - `MAIL_MAILER=log` (the default) writes
+these to the log instead of a real inbox, so this needs no setup either
+(`tests/Feature/OrderNotificationEmailTest.php`).
 
 ## 8. Going live later
 
-Nothing else in the codebase needs to change — just flip the mode flags in
-`.env` once you have real credentials:
+### Bringing MTN MoMo back
+
+The integration itself needs no rebuilding - only `CheckoutController`
+needs to offer it again (re-add a `payment_method` field/selector to
+`resources/views/storefront/checkout/index.blade.php` and
+`CheckoutController::store()`, which currently hardcodes `'manual'`).
+Once that's back, flip the mode flags in `.env`:
 
 ```
 # MTN MoMo (Collection API, Request to Pay). Try MTN's developer sandbox first:
@@ -169,7 +181,11 @@ MOMO_CALLBACK_URL=https://your-real-domain/webhooks/mtn-momo
 # Real payments in Ghana: MOMO_ENVIRONMENT=mtnghana,
 # MOMO_BASE_URL=https://proxy.momoapi.mtn.com, MOMO_CURRENCY=GHS and the
 # credentials issued by MTN Ghana's MoMo business onboarding.
+```
 
+### SMS and email
+
+```
 SMS_MODE=live
 SMS_GATEWAY_BASE_URL=...
 SMS_GATEWAY_API_KEY=...

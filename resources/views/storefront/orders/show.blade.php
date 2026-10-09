@@ -39,7 +39,7 @@
             <p class="text-xs text-amber-800 mb-4 leading-relaxed">{{ $order->on_hold_reason }} Please select how you would like to proceed:</p>
             <form action="{{ route('orders.resolve-hold', $order) }}" method="POST" class="flex flex-wrap gap-3">
                 @csrf
-                <button type="submit" name="preference" value="refund" class="border border-amber-400 bg-white text-amber-900 hover:bg-amber-100 font-bold rounded-full px-5 py-2.5 text-xs shadow-2xs transition-all">Full Refund via MoMo</button>
+                <button type="submit" name="preference" value="refund" class="border border-amber-400 bg-white text-amber-900 hover:bg-amber-100 font-bold rounded-full px-5 py-2.5 text-xs shadow-2xs transition-all">Full Refund</button>
                 <button type="submit" name="preference" value="credit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-full px-5 py-2.5 text-xs shadow-xs transition-all">Credit for Next-Day Harvest</button>
             </form>
         </div>

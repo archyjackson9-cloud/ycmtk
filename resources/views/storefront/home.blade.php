@@ -69,9 +69,9 @@
                         <div class="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-accent-400 mb-3 group-hover:scale-110 transition-transform">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         </div>
-                        <p class="text-2xl font-black text-white">Hubtel MoMo</p>
-                        <p class="text-xs font-bold text-amber-200 mt-0.5">Instant Checkout</p>
-                        <p class="text-[11px] text-emerald-100/70 mt-1">Protected Mobile Money & Card payment</p>
+                        <p class="text-2xl font-black text-white">Pay by Transfer</p>
+                        <p class="text-xs font-bold text-amber-200 mt-0.5">Secure Checkout</p>
+                        <p class="text-[11px] text-emerald-100/70 mt-1">Pay our account directly, we confirm on our end</p>
                     </div>
 
                     <div class="backdrop-blur-xl bg-white/10 hover:bg-white/15 border border-white/20 rounded-2xl p-5 transition-all duration-300 shadow-lg shadow-black/10 group">

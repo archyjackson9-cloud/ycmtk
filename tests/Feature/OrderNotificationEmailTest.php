@@ -7,6 +7,7 @@ use App\Enums\OrderEventType;
 use App\Mail\OrderEventMail;
 use App\Models\NotificationLog;
 use App\Models\Order;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\Concerns\CreatesCymarketFixtures;
@@ -22,16 +23,23 @@ class OrderNotificationEmailTest extends TestCase
 {
     use CreatesCymarketFixtures, RefreshDatabase;
 
+    protected function enableManualPayment(): void
+    {
+        $settings = app(SettingsService::class);
+        $settings->set('manual_payment_account_name', 'CY-Market Farms Ltd');
+        $settings->set('manual_payment_account_number', '0241234567');
+    }
+
     protected function placeOrderWithEmail(): Order
     {
+        $this->enableManualPayment();
+
         $zone = $this->makeDeliveryZone(['fee_override' => 15.00]);
         $product = $this->makeProduct(['selling_price' => 20.00, 'available_quantity' => 10]);
 
         $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 2]));
 
         $this->post(route('checkout.store'), [
-            'payment_method' => 'momo',
-            'momo_number' => '+233200000093',
             'recipient_name' => 'Akua Boadi',
             'phone' => '+233200000093',
             'delivery_zone_id' => $zone->id,
@@ -62,14 +70,13 @@ class OrderNotificationEmailTest extends TestCase
     public function test_no_email_is_sent_when_the_order_has_no_email_address(): void
     {
         Mail::fake();
+        $this->enableManualPayment();
 
         $zone = $this->makeDeliveryZone();
         $product = $this->makeProduct(['available_quantity' => 10]);
 
         $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]));
         $this->post(route('checkout.store'), [
-            'payment_method' => 'momo',
-            'momo_number' => '+233200000092',
             'recipient_name' => 'Kwame Antwi',
             'phone' => '+233200000092',
             'delivery_zone_id' => $zone->id,
@@ -85,6 +92,7 @@ class OrderNotificationEmailTest extends TestCase
     public function test_a_registered_customers_account_email_is_used_when_no_guest_email_applies(): void
     {
         Mail::fake();
+        $this->enableManualPayment();
 
         $user = $this->makeCustomer(['email' => 'yaw.asante@example.test']);
         $zone = $this->makeDeliveryZone();
@@ -93,8 +101,6 @@ class OrderNotificationEmailTest extends TestCase
         $this->actingAs($user);
         $this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]);
         $this->post(route('checkout.store'), [
-            'payment_method' => 'momo',
-            'momo_number' => '+233200000091',
             'recipient_name' => $user->name,
             'phone' => '+233200000091',
             'delivery_zone_id' => $zone->id,

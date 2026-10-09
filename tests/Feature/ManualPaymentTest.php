@@ -40,7 +40,6 @@ class ManualPaymentTest extends TestCase
         $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => $quantity]));
 
         $this->post(route('checkout.store'), [
-            'payment_method' => 'manual',
             'recipient_name' => 'Kwesi Darko',
             'phone' => '+233200000095',
             'delivery_zone_id' => $zone->id,
@@ -51,7 +50,7 @@ class ManualPaymentTest extends TestCase
         return Order::firstOrFail();
     }
 
-    public function test_checkout_with_manual_payment_sends_the_customer_to_the_instructions_page_and_holds_stock_for_the_configured_window(): void
+    public function test_checkout_sends_the_customer_to_the_instructions_page_and_holds_stock_for_the_configured_window(): void
     {
         $order = $this->placeOrder(quantity: 2);
         $payment = $order->latestPayment();
@@ -59,6 +58,9 @@ class ManualPaymentTest extends TestCase
         $this->assertSame('manual', $payment->provider);
         $this->assertSame(PaymentStatus::Pending, $payment->status);
         $this->assertSame(OrderStatus::PendingPayment, $order->status);
+        $this->assertEquals(40.00, (float) $order->subtotal);
+        $this->assertEquals(15.00, (float) $order->delivery_fee);
+        $this->assertEquals(55.00, (float) $order->total);
 
         $reservation = StockReservation::where('order_id', $order->id)->firstOrFail();
         $this->assertTrue(
@@ -67,16 +69,18 @@ class ManualPaymentTest extends TestCase
         );
     }
 
-    public function test_manual_payment_option_is_hidden_when_no_account_details_are_configured(): void
+    public function test_checkout_is_blocked_with_a_clear_message_when_no_account_details_are_configured(): void
     {
-        // No enableManualPayment() call - account details are blank.
+        // No enableManualPayment() call - account details are blank, and
+        // pay-by-transfer is the only payment method, so there's nothing
+        // left to fall back to (TOR §11 "no live payment method" is better
+        // surfaced here than as a broken order).
         $zone = $this->makeDeliveryZone();
         $product = $this->makeProduct(['available_quantity' => 10]);
 
         $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]));
 
         $response = $this->post(route('checkout.store'), [
-            'payment_method' => 'manual',
             'recipient_name' => 'Adwoa Nyarko',
             'phone' => '+233200000094',
             'delivery_zone_id' => $zone->id,
@@ -84,12 +88,32 @@ class ManualPaymentTest extends TestCase
             'guest_name' => 'Adwoa Nyarko',
         ]);
 
-        // Falls back to momo rather than sending the customer to a blank
-        // instructions page - and momo_number is then required, so this
-        // particular request (which sent none) is rejected with a
-        // validation error rather than creating an order.
-        $response->assertSessionHasErrors('momo_number');
+        $response->assertRedirect(route('checkout.index'));
+        $response->assertSessionHas('error');
         $this->assertSame(0, Order::count());
+    }
+
+    public function test_a_tampered_payment_method_field_is_ignored_and_the_order_is_still_manual(): void
+    {
+        $this->enableManualPayment();
+        $zone = $this->makeDeliveryZone();
+        $product = $this->makeProduct(['available_quantity' => 10]);
+
+        $this->carryCookies($this->post(route('cart.store'), ['product_id' => $product->id, 'quantity' => 1]));
+
+        $this->post(route('checkout.store'), [
+            'payment_method' => 'momo',
+            'momo_number' => '+233200000090',
+            'recipient_name' => 'Abena Owusu',
+            'phone' => '+233200000090',
+            'delivery_zone_id' => $zone->id,
+            'address_line' => '10 River Road, Tarkwa',
+            'guest_name' => 'Abena Owusu',
+        ]);
+
+        $order = Order::firstOrFail();
+
+        $this->assertSame('manual', $order->latestPayment()->provider, 'MTN MoMo is dormant for now - the storefront never creates a momo payment regardless of what a request claims.');
     }
 
     public function test_staff_confirming_a_manual_payment_marks_the_order_paid_and_consumes_stock(): void

@@ -160,15 +160,22 @@ redeploy — just make sure `.env` itself is current before restarting.
 - **Uploaded images disappear after a redeploy** — they shouldn't: `storage/` is a named Docker volume (`app-storage`) that survives `docker compose up -d --build`. It's only lost if you explicitly run `docker compose down -v`. Never use `-v` unless you mean to wipe the database and uploads.
 - **Scheduled jobs (stock reservations, abandoned carts) not firing** — `docker compose logs scheduler` should show a `schedule:run` line every 60 seconds.
 
-## MTN MoMo payments (pilot)
+## Pay by transfer (the only live payment method right now)
 
-The checkout asks for an MTN MoMo number; after the order is placed MTN
-sends a PIN prompt to that phone and the order page updates by itself once
-it is approved. Settings (all in `.env`, see `.env.docker.example`):
+The customer pays an account you publish directly (bank or MoMo, outside
+the system), and a Super Admin confirms the matching payment by hand from
+**Admin > Payments** once they see it land. Nothing calls this system
+automatically, so there's no credential or env var to set up - just fill
+in the account details at **Admin > Settings > "Pay by Transfer"**.
+**Checkout is blocked with a clear message until this is done** - leaving
+the account name/number blank there is the same as checkout being closed,
+since there's no other payment method live at the moment.
 
-- `MOMO_MODE=simulate` — local Approve/Decline page, no MTN account needed (default).
-- `MOMO_MODE=live` — real API. Use `MOMO_ENVIRONMENT=sandbox` + `MOMO_CURRENCY=EUR` against MTN's developer sandbox first, then `MOMO_ENVIRONMENT=mtnghana`, `MOMO_BASE_URL=https://proxy.momoapi.mtn.com`, `MOMO_CURRENCY=GHS` with the credentials MTN Ghana issues.
-- `MOMO_CALLBACK_URL=https://yourdomain/webhooks/mtn-momo` — MTN's status callback. It is never trusted on its own: the app re-checks the status with MTN, and the scheduler container also reconciles any payment still pending after a minute.
+Because a human has to notice and confirm the transfer, this method holds
+its stock reservation for a day by default rather than minutes - also
+configurable on that same Settings page ("Stock Hold Time", default 24h,
+backed by `CYMARKET_MANUAL_PAYMENT_RESERVATION_HOURS` if you'd rather set
+it via env instead).
 
 After deploying this update run the new migration once:
 
@@ -176,21 +183,19 @@ After deploying this update run the new migration once:
 docker compose exec app php artisan migrate --force
 ```
 
-## Pay by transfer (second pilot payment method)
+## MTN MoMo (dormant, on hold)
 
-A second, manual payment method: the customer pays an account you publish
-directly (bank or MoMo, outside the system), and a Super Admin confirms
-the matching payment by hand from Admin > Payments once they see it land.
-Nothing calls this system automatically, so there's no credential or env
-var to set up - just fill in the account details from Admin > Settings >
-"Pay by Transfer". Leaving the account name/number blank there hides the
-option at checkout entirely (it falls back to MTN MoMo only).
+MTN MoMo integration is complete and tested (`MtnMomoPaymentService`, its
+webhook, the simulate pages) but the storefront doesn't offer it right now
+- getting real MTN API credentials is on hold. Checkout never creates a
+MoMo payment regardless of what's posted to it; bringing it back is a
+`CheckoutController`/checkout-page change, not a rebuild - see
+`PaymentGatewayResolver` and `SETUP.md`'s "Bringing MTN MoMo back" section.
+The `MOMO_*` env vars below still exist for when that happens:
 
-Because a human has to notice and confirm the transfer, this method holds
-its stock reservation much longer than MoMo's near-instant one - also
-configurable on that same Settings page ("Stock Hold Time", default 24h,
-backed by `CYMARKET_MANUAL_PAYMENT_RESERVATION_HOURS` if you'd rather set
-it via env instead).
+- `MOMO_MODE=simulate` — local Approve/Decline page, no MTN account needed (default).
+- `MOMO_MODE=live` — real API. Use `MOMO_ENVIRONMENT=sandbox` + `MOMO_CURRENCY=EUR` against MTN's developer sandbox first, then `MOMO_ENVIRONMENT=mtnghana`, `MOMO_BASE_URL=https://proxy.momoapi.mtn.com`, `MOMO_CURRENCY=GHS` with the credentials MTN Ghana issues.
+- `MOMO_CALLBACK_URL=https://yourdomain/webhooks/mtn-momo` — MTN's status callback. It is never trusted on its own: the app re-checks the status with MTN, and the scheduler container also reconciles any payment still pending after a minute.
 
 ## Order-tracking-update emails
 
