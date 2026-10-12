@@ -136,6 +136,31 @@
                     <a href="{{ route('register') }}" class="hidden sm:inline-flex items-center text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-full shadow-xs hover:shadow-md hover:shadow-brand-600/20 liquid-tap transition-all">Sign up</a>
                 @endauth
 
+                {{-- Install App button - hidden until JS determines it's actually
+                     usable (Chrome/Edge/Android fired beforeinstallprompt, or iOS
+                     Safari not already installed - see the script near the
+                     bottom of this layout). --}}
+                <button type="button" id="pwa-install-button" aria-label="Install App"
+                        class="hidden items-center gap-1.5 rounded-full liquid-glass hover:bg-white/10 px-3.5 py-2 text-brand-900 liquid-tap transition-all">
+                    <svg class="h-4 w-4 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="text-xs font-bold hidden sm:inline">Install</span>
+                </button>
+
+                {{-- iOS has no programmatic install prompt - clicking the
+                     button above on iOS Safari opens this instead. --}}
+                <div id="pwa-ios-modal" class="hidden fixed inset-0 z-[60] items-center justify-center bg-black/40 p-4">
+                    <div class="liquid-glass-strong rounded-3xl p-6 max-w-xs w-full text-center space-y-3">
+                        <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white font-black text-sm mx-auto">CY</div>
+                        <h3 class="text-sm font-black text-gray-900">Install CY-Market</h3>
+                        <p class="text-xs text-gray-600 leading-relaxed">
+                            Tap <strong>Share</strong>
+                            <svg class="inline h-4 w-4 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342a3.001 3.001 0 10-2.684-4.684 3 3 0 002.684 4.684zm0 0L15.316 17m-6.632-9.342L15.316 7"/></svg>
+                            in Safari's toolbar, then choose <strong>"Add to Home Screen."</strong>
+                        </p>
+                        <button type="button" id="pwa-ios-modal-close" class="mt-1 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full px-5 py-2 transition-colors">Got it</button>
+                    </div>
+                </div>
+
                 {{-- Glass Cart Pill --}}
                 <a href="{{ route('cart.index') }}" class="relative inline-flex items-center gap-2 rounded-full liquid-glass hover:bg-white/10 px-3.5 py-2 text-brand-900 liquid-tap transition-all group">
                     <svg class="h-5 w-5 text-brand-700 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,19 +303,6 @@
         </script>
     @endauth
 
-    {{-- PWA install prompt - Chrome/Android/Desktop only; iOS has no
-         programmatic prompt, but the manifest/icons above already make
-         "Add to Home Screen" from Safari's share sheet work correctly. --}}
-    <div id="pwa-install-banner" class="hidden fixed bottom-4 inset-x-4 sm:inset-x-auto sm:right-4 sm:left-auto sm:w-80 z-50 liquid-glass rounded-2xl shadow-lg p-4 flex items-center gap-3">
-        <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white font-black text-xs shrink-0">CY</div>
-        <div class="flex-1 min-w-0">
-            <p class="text-xs font-extrabold text-gray-900">Install CY-Market</p>
-            <p class="text-[11px] text-gray-500">Add to your home screen for quick access.</p>
-        </div>
-        <button type="button" id="pwa-install-dismiss" aria-label="Dismiss" class="text-gray-400 hover:text-gray-600 text-sm px-1">✕</button>
-        <button type="button" id="pwa-install-accept" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full px-3 py-2 shrink-0 transition-colors">Install</button>
-    </div>
-
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
@@ -300,36 +312,70 @@
             });
         }
 
+        {{-- Persistent "Install" button in the header (#pwa-install-button) -
+             shown only once the page is actually installable, since a button
+             that does nothing is worse than no button:
+             - Chrome/Edge/Android: shown once `beforeinstallprompt` fires
+               (requires a valid manifest + reachable icons + HTTPS), and
+               clicking it opens the real browser install prompt.
+             - iOS Safari: `beforeinstallprompt` never fires there (no
+               programmatic prompt exists on iOS at all) - shown instead
+               whenever the page isn't already running standalone, and
+               clicking it opens on-screen "Share > Add to Home Screen"
+               instructions (#pwa-ios-modal), since that's the only way to
+               install on iOS. --}}
         (function () {
-            var DISMISS_KEY = 'cymarket_pwa_install_dismissed';
-            var banner = document.getElementById('pwa-install-banner');
+            var button = document.getElementById('pwa-install-button');
+            var iosModal = document.getElementById('pwa-ios-modal');
             var deferredPrompt = null;
+
+            function showButton() {
+                if (!button) return;
+                button.classList.remove('hidden');
+                button.classList.add('inline-flex');
+            }
+
+            function hideButton() {
+                if (!button) return;
+                button.classList.add('hidden');
+                button.classList.remove('inline-flex');
+            }
+
+            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent) && !window.MSStream;
+
+            if (!isStandalone && isIos) {
+                showButton();
+            }
 
             window.addEventListener('beforeinstallprompt', function (e) {
                 e.preventDefault();
                 deferredPrompt = e;
-
-                if (banner && localStorage.getItem(DISMISS_KEY) !== '1') {
-                    banner.classList.remove('hidden');
-                }
+                showButton();
             });
 
-            document.getElementById('pwa-install-dismiss')?.addEventListener('click', function () {
-                banner.classList.add('hidden');
-                try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) {}
-            });
-
-            document.getElementById('pwa-install-accept')?.addEventListener('click', function () {
-                banner.classList.add('hidden');
+            button?.addEventListener('click', function () {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
-                    deferredPrompt = null;
+                    deferredPrompt.userChoice.finally(function () { deferredPrompt = null; });
+
+                    return;
                 }
+
+                if (isIos && iosModal) {
+                    iosModal.classList.remove('hidden');
+                    iosModal.classList.add('flex');
+                }
+            });
+
+            document.getElementById('pwa-ios-modal-close')?.addEventListener('click', function () {
+                iosModal.classList.add('hidden');
+                iosModal.classList.remove('flex');
             });
 
             window.addEventListener('appinstalled', function () {
-                if (banner) banner.classList.add('hidden');
-                try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) {}
+                deferredPrompt = null;
+                hideButton();
             });
         })();
     </script>

@@ -64,6 +64,8 @@ class PwaTest extends TestCase
         $response->assertOk();
         $response->assertSee('<link rel="manifest" href="/manifest.webmanifest">', false);
         $response->assertSee("navigator.serviceWorker.register('/sw.js')", false);
+        $response->assertSee('id="pwa-install-button"', false);
+        $response->assertSee("beforeinstallprompt", false);
     }
 
     public function test_the_admin_panel_also_declares_the_manifest(): void
