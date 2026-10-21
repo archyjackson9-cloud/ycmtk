@@ -31,6 +31,7 @@ class ViewOrder extends ViewRecord
                     TextEntry::make('status')->badge()->formatStateUsing(fn ($state) => $state->label())->color(fn ($state) => $state->color()),
                     TextEntry::make('created_at')->label('Placed')->dateTime('d M Y, H:i'),
                     TextEntry::make('total')->money('GHS'),
+                    TextEntry::make('scheduled_delivery_at')->label('Scheduled delivery')->dateTime('l d M Y, H:i')->placeholder('-'),
                 ]),
 
             Section::make('Customer & Delivery')

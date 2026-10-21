@@ -48,6 +48,10 @@ class Settings extends Page implements HasForms
             'stock_reservation_minutes' => $settings->stockReservationMinutes(),
             'abandoned_cart_hours' => $settings->abandonedCartHours(),
             'order_escalation_hours' => $settings->orderEscalationHours(),
+            'delivery_weekday_cutoff' => $settings->deliveryWeekdayCutoff(),
+            'delivery_weekday_time' => $settings->deliveryWeekdayTime(),
+            'delivery_weekend_cutoff' => $settings->deliveryWeekendCutoff(),
+            'delivery_weekend_time' => $settings->deliveryWeekendTime(),
             'manual_payment_reservation_hours' => $settings->manualPaymentReservationHours(),
             'manual_payment_account_name' => $settings->manualPaymentAccountName(),
             'manual_payment_account_number' => $settings->manualPaymentAccountNumber(),
@@ -63,7 +67,7 @@ class Settings extends Page implements HasForms
             $smsFields[] = Forms\Components\Textarea::make('sms_template_'.$event->value)
                 ->label($event->label())
                 ->rows(2)
-                ->helperText('Placeholders: {order_number} {total} {address} {reason}')
+                ->helperText('Placeholders: {order_number} {total} {address} {reason} {delivery}')
                 ->maxLength(320);
         }
 
@@ -78,6 +82,23 @@ class Settings extends Page implements HasForms
                         Forms\Components\TextInput::make('pilot_zone_name')
                             ->label('Pilot Zone Name')
                             ->required()->maxLength(255),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Delivery Schedule')
+                    ->description('Orders placed before the cut-off are delivered the same day; orders at or after it roll to the next day\'s slot. Times are in the shop timezone ('.config('app.timezone').').')
+                    ->schema([
+                        Forms\Components\TimePicker::make('delivery_weekday_cutoff')
+                            ->label('Mon-Fri Order Cut-off')
+                            ->seconds(false)->required(),
+                        Forms\Components\TimePicker::make('delivery_weekday_time')
+                            ->label('Mon-Fri Delivery Time')
+                            ->seconds(false)->required(),
+                        Forms\Components\TimePicker::make('delivery_weekend_cutoff')
+                            ->label('Sat-Sun Order Cut-off')
+                            ->seconds(false)->required(),
+                        Forms\Components\TimePicker::make('delivery_weekend_time')
+                            ->label('Sat-Sun Delivery Time')
+                            ->seconds(false)->required(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Operational Timers')
@@ -132,6 +153,9 @@ class Settings extends Page implements HasForms
 
         $settings->set('delivery_fee', (float) $state['delivery_fee']);
         $settings->set('pilot_zone_name', $state['pilot_zone_name']);
+        foreach (['delivery_weekday_cutoff', 'delivery_weekday_time', 'delivery_weekend_cutoff', 'delivery_weekend_time'] as $key) {
+            $settings->set($key, substr((string) $state[$key], 0, 5));
+        }
         $settings->set('stock_reservation_minutes', (int) $state['stock_reservation_minutes']);
         $settings->set('abandoned_cart_hours', (int) $state['abandoned_cart_hours']);
         $settings->set('order_escalation_hours', (int) $state['order_escalation_hours']);

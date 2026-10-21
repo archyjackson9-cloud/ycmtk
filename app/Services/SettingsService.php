@@ -104,6 +104,45 @@ class SettingsService
         return (string) $this->get('sms_template_'.$eventKey, $default);
     }
 
+    /**
+     * Delivery schedule (see DeliveryScheduleService): "HH:MM" 24-hour
+     * cut-off and delivery times, separately for Mon-Fri and Sat-Sun.
+     */
+    public function deliveryWeekdayCutoff(): string
+    {
+        return $this->time('delivery_weekday_cutoff', '10:00');
+    }
+
+    public function deliveryWeekdayTime(): string
+    {
+        return $this->time('delivery_weekday_time', '16:00');
+    }
+
+    public function deliveryWeekendCutoff(): string
+    {
+        return $this->time('delivery_weekend_cutoff', '10:00');
+    }
+
+    public function deliveryWeekendTime(): string
+    {
+        return $this->time('delivery_weekend_time', '11:00');
+    }
+
+    /**
+     * Normalises a stored time ("10:00", "10:00:00") to "HH:MM", falling
+     * back to the default if the stored value is missing or malformed.
+     */
+    protected function time(string $key, string $default): string
+    {
+        $value = (string) $this->get($key, $default);
+
+        if (! preg_match('/^([01]?\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/', $value, $m)) {
+            return $default;
+        }
+
+        return sprintf('%02d:%s', $m[1], $m[2]);
+    }
+
     public function currencySymbol(): string
     {
         return config('cymarket.currency_symbol');

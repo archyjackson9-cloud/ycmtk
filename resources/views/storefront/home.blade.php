@@ -4,20 +4,25 @@
 
 @section('content')
 
-    {{-- Hero Section - editable via Admin > Marketing > Banners --}}
-    @php($banner = $heroBanners->first())
-    <section class="relative bg-gradient-to-br from-brand-950 via-[#072f1b] to-emerald-950 text-white overflow-hidden">
-        {{-- Background Media (image or video), sitting behind everything else --}}
-        @if($banner?->hasVideo())
-            <video src="{{ $banner->videoUrl() }}" class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline
-                   @if($banner->imageUrl()) poster="{{ $banner->imageUrl() }}" @endif>
-            </video>
-        @elseif($banner?->imageUrl())
-            <img src="{{ $banner->imageUrl() }}" alt="" class="absolute inset-0 w-full h-full object-cover" aria-hidden="true">
-        @endif
+    {{-- Hero Section - editable via Admin > Marketing > Banners. Every live banner is a slide. --}}
+    @php($slides = $heroBanners->isEmpty() ? collect([null]) : $heroBanners->values())
+    <section id="hero" class="group/hero relative bg-gradient-to-br from-brand-950 via-[#072f1b] to-emerald-950 text-white overflow-hidden"
+             aria-roledescription="carousel" aria-label="Featured offers">
+        {{-- Background media, one layer per slide, behind everything else --}}
+        @foreach($slides as $i => $banner)
+            <div data-hero-bg class="absolute inset-0 transition-opacity duration-700 {{ $i === 0 ? '' : 'opacity-0' }}" aria-hidden="true">
+                @if($banner?->hasVideo())
+                    <video src="{{ $banner->videoUrl() }}" class="absolute inset-0 w-full h-full object-cover" muted loop playsinline
+                           preload="{{ $i === 0 ? 'auto' : 'none' }}" @if($i === 0) autoplay @endif
+                           @if($banner->imageUrl()) poster="{{ $banner->imageUrl() }}" @endif></video>
+                @elseif($banner?->imageUrl())
+                    <img src="{{ $banner->imageUrl() }}" alt="" class="absolute inset-0 w-full h-full object-cover" @if($i > 0) loading="lazy" @endif decoding="async">
+                @endif
+            </div>
+        @endforeach
 
-        {{-- Dark scrim so text stays legible over any background media --}}
-        <div class="absolute inset-0 bg-gradient-to-br from-brand-950/90 via-[#072f1b]/85 to-emerald-950/90"></div>
+        {{-- Light scrim: readable by default, fades on hover (hover-capable devices only) so the image shows fully --}}
+        <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-brand-950/70 via-[#072f1b]/50 to-emerald-950/70 transition-opacity duration-500 group-hover/hero:opacity-20 group-focus-within/hero:opacity-100!"></div>
 
         {{-- Ambient Glow Orbs --}}
         <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -25,34 +30,57 @@
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 relative z-10">
             <div class="grid lg:grid-cols-12 gap-12 items-center">
-                {{-- Left Editorial Headline --}}
-                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
-                        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>Single-Seller Farm Direct • {{ config('cymarket.pilot_zone_name') }}</span>
-                    </div>
+                {{-- Left Editorial Headline: slides share one grid cell and cross-fade --}}
+                <div class="lg:col-span-7 grid text-center lg:text-left">
+                    @foreach($slides as $i => $banner)
+                        <div data-hero-slide class="col-start-1 row-start-1 space-y-6 transition-opacity duration-700 {{ $i === 0 ? '' : 'opacity-0 invisible' }}"
+                             role="group" aria-roledescription="slide" aria-label="{{ $i + 1 }} of {{ $slides->count() }}">
+                            <div class="space-y-6 transition-opacity duration-500 group-hover/hero:opacity-15 group-focus-within/hero:opacity-100!">
+                                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
+                                    <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span>Single-Seller Farm Direct • {{ config('cymarket.pilot_zone_name') }}</span>
+                                </div>
 
-                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
-                        {{ $banner->title ?? 'Farm-Fresh Harvest, Delivered to Your Door.' }}
-                    </h1>
+                                @if($i === 0)
+                                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white [text-shadow:0_2px_12px_rgb(0_0_0/0.45)]">
+                                        {{ $banner->title ?? 'Farm-Fresh Harvest, Delivered to Your Door.' }}
+                                    </h1>
+                                @else
+                                    <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white [text-shadow:0_2px_12px_rgb(0_0_0/0.45)]">
+                                        {{ $banner->title }}
+                                    </h2>
+                                @endif
 
-                    <p class="text-base sm:text-lg text-emerald-100/80 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
-                        {{ $banner->subtitle ?? 'Every fruit, vegetable, and grain on CY-Market is harvested directly from our own certified farms. No third-party middlemen — only genuine farm-fresh goodness.' }}
-                    </p>
+                                <p class="text-base sm:text-lg text-emerald-50 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed [text-shadow:0_1px_8px_rgb(0_0_0/0.5)]">
+                                    {{ $banner->subtitle ?? 'Every fruit, vegetable, and grain on CY-Market is harvested directly from our own certified farms. No third-party middlemen — only genuine farm-fresh goodness.' }}
+                                </p>
+                            </div>
 
-                    <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                        <a href="{{ $banner->link_url ?? route('products.index') }}"
-                           class="inline-flex items-center gap-2.5 bg-gradient-to-r from-emerald-500 to-brand-600 hover:from-emerald-600 hover:to-brand-700 text-white font-bold px-7 py-3.5 rounded-full shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 hover:-translate-y-0.5 transition-all">
-                            <span>{{ $banner->cta_label ?? 'Shop Fresh Produce' }}</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                        </a>
-                        <a href="{{ route('orders.track-form') }}"
-                           class="inline-flex items-center gap-2 backdrop-blur-md bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-6 py-3.5 rounded-full transition-all">
-                            <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            <span>Track an Order</span>
-                        </a>
-                    </div>
+                            <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                                <a href="{{ $banner->link_url ?? route('products.index') }}"
+                                   class="inline-flex items-center gap-2.5 bg-gradient-to-r from-emerald-500 to-brand-600 hover:from-emerald-600 hover:to-brand-700 text-white font-bold px-7 py-3.5 rounded-full shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 hover:-translate-y-0.5 transition-all">
+                                    <span>{{ $banner?->cta_label ?: 'Shop Fresh Produce' }}</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </a>
+                                <a href="{{ route('orders.track-form') }}"
+                                   class="inline-flex items-center gap-2 bg-emerald-950/60 hover:bg-emerald-950/75 border border-white/25 text-white font-semibold px-6 py-3.5 rounded-full transition-all">
+                                    <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <span>Track an Order</span>
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+
+                    @if($slides->count() > 1)
+                        <div class="col-start-1 row-start-2 mt-6 flex items-center justify-center lg:justify-start gap-2" role="group" aria-label="Choose slide">
+                            @foreach($slides as $i => $banner)
+                                <button type="button" data-hero-dot="{{ $i }}" aria-label="Show slide {{ $i + 1 }}" aria-current="{{ $i === 0 ? 'true' : 'false' }}"
+                                        class="h-2.5 w-2.5 rounded-full bg-white/40 aria-[current=true]:bg-white aria-[current=true]:w-6 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"></button>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
+
 
                 {{-- Right 4 Glass Feature Tiles --}}
                 <div class="lg:col-span-5 grid grid-cols-2 gap-3.5">
@@ -113,16 +141,18 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
                 @foreach($featuredCategories as $category)
                     <a href="{{ route('categories.show', $category) }}"
-                       class="group flex flex-col items-center liquid-glass rounded-[26px] p-4 hover:shadow-lg hover:shadow-brand-950/10 hover:-translate-y-1 liquid-tap transition-all duration-300 text-center">
-                        <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-brand-50 to-brand-100/80 group-hover:from-brand-100 group-hover:to-brand-200 overflow-hidden flex items-center justify-center border border-brand-200/50 shadow-2xs group-hover:scale-105 transition-transform duration-300">
-                            @if($category->image)
-                                <img src="{{ $category->imageUrl() }}" alt="{{ $category->name }}" class="h-full w-full object-cover">
-                            @else
-                                <span class="text-brand-800 font-extrabold text-xl">{{ Str::substr($category->name, 0, 1) }}</span>
-                            @endif
+                       class="group relative block aspect-[4/5] sm:aspect-square overflow-hidden rounded-[26px] bg-gradient-to-br from-brand-600 to-brand-800 shadow-xs hover:shadow-lg hover:shadow-brand-950/20 hover:-translate-y-1 liquid-tap transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+                        @if($category->image)
+                            <img src="{{ $category->imageUrl() }}" alt="{{ $category->name }}" loading="lazy" decoding="async"
+                                 class="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        @else
+                            <span aria-hidden="true" class="absolute inset-0 flex items-center justify-center pb-6 text-5xl font-black text-white/25">{{ Str::substr($category->name, 0, 1) }}</span>
+                        @endif
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" aria-hidden="true"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-3 text-left">
+                            <p class="text-sm font-bold leading-tight text-white drop-shadow line-clamp-2">{{ $category->name }}</p>
+                            <span class="mt-0.5 block text-[10px] font-medium text-white/80">Fresh harvest</span>
                         </div>
-                        <p class="mt-3 text-xs font-bold text-gray-800 group-hover:text-brand-700 transition-colors line-clamp-1">{{ $category->name }}</p>
-                        <span class="text-[10px] text-gray-400 mt-0.5 font-medium">Fresh harvest</span>
                     </a>
                 @endforeach
             </div>
@@ -228,3 +258,46 @@
     @endif
 
 @endsection
+
+@push('scripts')
+    <script>
+        (function () {
+            var hero = document.getElementById('hero');
+            if (!hero) return;
+            var slides = hero.querySelectorAll('[data-hero-slide]');
+            var bgs = hero.querySelectorAll('[data-hero-bg]');
+            var dots = hero.querySelectorAll('[data-hero-dot]');
+            if (slides.length < 2) return;
+            var current = 0, timer = null;
+
+            function show(n) {
+                current = (n + slides.length) % slides.length;
+                slides.forEach(function (s, i) {
+                    var on = i === current;
+                    s.classList.toggle('opacity-0', !on);
+                    s.classList.toggle('invisible', !on);
+                    s.setAttribute('aria-hidden', on ? 'false' : 'true');
+                });
+                bgs.forEach(function (b, i) {
+                    b.classList.toggle('opacity-0', i !== current);
+                    var v = b.querySelector('video');
+                    if (v) { if (i === current) { v.play().catch(function () {}); } else { v.pause(); } }
+                });
+                dots.forEach(function (d, i) { d.setAttribute('aria-current', i === current ? 'true' : 'false'); });
+            }
+            function stop() { clearInterval(timer); timer = null; }
+            function start() {
+                if (timer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                timer = setInterval(function () { show(current + 1); }, 6000);
+            }
+            dots.forEach(function (d, i) { d.addEventListener('click', function () { show(i); }); });
+            hero.addEventListener('mouseenter', stop);
+            hero.addEventListener('mouseleave', start);
+            hero.addEventListener('focusin', stop);
+            hero.addEventListener('focusout', start);
+            document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
+            show(0);
+            start();
+        })();
+    </script>
+@endpush

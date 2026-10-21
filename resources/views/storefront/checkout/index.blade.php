@@ -216,6 +216,10 @@
                     </div>
                 </div>
 
+                <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 font-semibold">
+                    {{ app(\App\Services\DeliveryScheduleService::class)->noticeLabel() }}
+                </div>
+
                 {{-- Pay CTA Button --}}
                 <div class="pt-2">
                     <button type="submit" {{ $manualPaymentAvailable ? '' : 'disabled' }}

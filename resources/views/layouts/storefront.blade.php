@@ -26,16 +26,16 @@
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:bg-brand-900 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg">Skip to content</a>
 
     {{-- Top utility bar --}}
-    <div class="bg-gradient-to-r from-brand-950/95 via-brand-900/90 to-brand-950/95 backdrop-blur-md text-emerald-100/90 text-xs border-b border-brand-800/40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between">
+    <div class="bg-gradient-to-r from-brand-950 via-brand-900 to-brand-950 text-emerald-100/90 text-xs border-b border-brand-800/40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-200 text-[11px] font-medium border border-brand-400/20">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse"></span>
                     Farm-Direct
                 </span>
                 <span class="hidden sm:inline text-emerald-200/80">Serving {{ config('cymarket.pilot_zone_name') }} with same-day dispatch</span>
             </div>
-            <div class="flex items-center gap-5 text-[11px]">
+            <div class="flex items-center gap-4 sm:gap-5 text-[11px]">
                 <a href="{{ route('orders.track-form') }}" class="flex items-center gap-1 text-emerald-200/90 hover:text-white transition-colors">
                     <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span>Track Order</span>
@@ -51,17 +51,17 @@
     </div>
 
     {{-- Main Glass Sticky Header — floating "Liquid Glass" bar --}}
-    <header class="sticky top-0 z-40 px-3 sm:px-6 pt-3 transition-all">
-        <div class="max-w-7xl mx-auto liquid-nav rounded-[28px] overflow-hidden">
-        <div class="px-4 sm:px-6 py-3 flex items-center gap-4 sm:gap-6">
+    <header class="sticky top-0 z-40 px-2 sm:px-6 pt-2 sm:pt-3 transition-all">
+        <div class="max-w-7xl mx-auto liquid-nav rounded-2xl sm:rounded-[28px]">
+        <div class="px-2.5 sm:px-6 py-2 sm:py-3 flex items-center gap-2 sm:gap-6">
             {{-- Brand Logo --}}
-            <a href="{{ route('home') }}" class="flex items-center gap-2.5 shrink-0 group">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 p-0.5 shadow-md shadow-brand-900/10 group-hover:scale-105 transition-transform">
+            <a href="{{ route('home') }}" aria-label="CY-Market home" class="flex items-center gap-2.5 shrink-0 group">
+                <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 p-0.5 shadow-md shadow-brand-900/10 group-hover:scale-105 transition-transform">
                     <div class="h-full w-full rounded-[10px] bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 flex items-center justify-center text-white font-black text-sm tracking-tight border border-white/20">
                         CY
                     </div>
                 </div>
-                <div class="flex flex-col">
+                <div class="hidden sm:flex flex-col">
                     <div class="flex items-center gap-1 leading-none">
                         <span class="text-lg font-extrabold text-gray-900 tracking-tight">CY<span class="text-brand-600">Market</span></span>
                     </div>
@@ -70,10 +70,11 @@
             </a>
 
             {{-- Search Bar --}}
-            <form action="{{ route('products.index') }}" method="GET" class="flex-1 max-w-xl mx-auto">
+            <form action="{{ route('products.index') }}" method="GET" class="flex-1 min-w-0 max-w-xl mx-auto" role="search">
                 <div class="relative group">
-                    <input type="search" name="q" value="{{ request('q') }}" placeholder="Search fresh vegetables, fruits, grains, tubers..."
-                           class="w-full rounded-full liquid-input py-2.5 pl-10 pr-12 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-all">
+                    <label for="site-search" class="sr-only">Search products</label>
+                    <input type="search" id="site-search" name="q" value="{{ request('q') }}" placeholder="Search produce..." enterkeyhint="search" autocomplete="off"
+                           class="w-full rounded-full liquid-input py-2 sm:py-2.5 pl-9 sm:pl-10 pr-11 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-all">
                     <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors pointer-events-none">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     </div>
@@ -84,12 +85,12 @@
             </form>
 
             {{-- Action Buttons --}}
-            <div class="flex items-center gap-3 shrink-0 text-sm">
+            <div class="flex items-center gap-1.5 sm:gap-3 shrink-0 text-sm">
                 @auth
                     {{-- Notification Bell - order-tracking updates for registered customers --}}
                     <div class="relative">
                         <button type="button" id="notif-bell-toggle" aria-label="Notifications" aria-expanded="false"
-                                class="relative inline-flex items-center justify-center h-9 w-9 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                                class="relative inline-flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                             @if(($unreadNotificationCount ?? 0) > 0)
                                 <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-xs">
@@ -97,7 +98,7 @@
                                 </span>
                             @endif
                         </button>
-                        <div id="notif-bell-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[90vw] liquid-glass rounded-2xl shadow-lg overflow-hidden z-50">
+                        <div id="notif-bell-panel" class="hidden fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-16 sm:top-auto sm:mt-2 sm:w-80 sm:max-w-[90vw] liquid-glass rounded-2xl shadow-lg overflow-hidden z-50">
                             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                 <span class="text-xs font-extrabold uppercase tracking-wider text-gray-700">Notifications</span>
                                 @if(($unreadNotificationCount ?? 0) > 0)
@@ -136,12 +137,37 @@
                     <a href="{{ route('register') }}" class="hidden sm:inline-flex items-center text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-full shadow-xs hover:shadow-md hover:shadow-brand-600/20 liquid-tap transition-all">Sign up</a>
                 @endauth
 
+                {{-- Mobile menu (below sm): auth/account links are hidden in the header at this width --}}
+                <details id="mobile-menu" class="sm:hidden">
+                    <summary aria-label="Menu" class="list-none [&::-webkit-details-marker]:hidden cursor-pointer inline-flex items-center justify-center h-10 w-10 rounded-full liquid-glass text-brand-900">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </summary>
+                    <div class="fixed left-2 right-2 top-16 z-50 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 p-2 text-sm">
+                        @auth
+                            <p class="px-3 pt-2 pb-1 text-xs text-gray-500 truncate">Signed in as <strong class="text-gray-800">{{ auth()->user()->name }}</strong></p>
+                            <a href="{{ route('account.edit') }}" class="flex items-center min-h-11 px-3 rounded-xl font-semibold text-gray-800 hover:bg-brand-50">Account</a>
+                            <a href="{{ route('orders.index') }}" class="flex items-center min-h-11 px-3 rounded-xl font-semibold text-gray-800 hover:bg-brand-50">My orders</a>
+                        @else
+                            <a href="{{ route('login') }}" class="flex items-center min-h-11 px-3 rounded-xl font-semibold text-gray-800 hover:bg-brand-50">Log in</a>
+                            <a href="{{ route('register') }}" class="flex items-center justify-center min-h-11 mt-1 px-3 rounded-xl font-bold text-white bg-brand-600 hover:bg-brand-700">Sign up</a>
+                        @endauth
+                        <a href="{{ route('orders.track-form') }}" class="flex items-center min-h-11 px-3 rounded-xl font-semibold text-gray-800 hover:bg-brand-50">Track order</a>
+                        <button type="button" id="pwa-install-menu" class="hidden w-full items-center min-h-11 px-3 rounded-xl font-semibold text-gray-800 hover:bg-brand-50 text-left">Install app</button>
+                        @auth
+                            <form method="POST" action="{{ route('logout') }}" class="mt-1 pt-1 border-t border-gray-100">
+                                @csrf
+                                <button type="submit" class="flex w-full items-center min-h-11 px-3 rounded-xl font-semibold text-red-600 hover:bg-red-50">Log out</button>
+                            </form>
+                        @endauth
+                    </div>
+                </details>
+
                 {{-- Install App button - hidden until JS determines it's actually
                      usable (Chrome/Edge/Android fired beforeinstallprompt, or iOS
                      Safari not already installed - see the script near the
                      bottom of this layout). --}}
                 <button type="button" id="pwa-install-button" aria-label="Install App"
-                        class="hidden items-center gap-1.5 rounded-full liquid-glass hover:bg-white/10 px-3.5 py-2 text-brand-900 liquid-tap transition-all">
+                        class="hidden max-sm:hidden! items-center gap-1.5 rounded-full liquid-glass hover:bg-white/10 px-3.5 py-2 text-brand-900 liquid-tap transition-all">
                     <svg class="h-4 w-4 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span class="text-xs font-bold hidden sm:inline">Install</span>
                 </button>
@@ -162,7 +188,7 @@
                 </div>
 
                 {{-- Glass Cart Pill --}}
-                <a href="{{ route('cart.index') }}" class="relative inline-flex items-center gap-2 rounded-full liquid-glass hover:bg-white/10 px-3.5 py-2 text-brand-900 liquid-tap transition-all group">
+                <a href="{{ route('cart.index') }}" class="relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full liquid-glass hover:bg-white/10 h-10 sm:h-auto px-3 sm:px-3.5 sm:py-2 text-brand-900 liquid-tap transition-all group" aria-label="Cart">
                     <svg class="h-5 w-5 text-brand-700 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
@@ -174,30 +200,12 @@
             </div>
         </div>
 
-        {{-- Category Navigation Rail --}}
-        <nav class="border-t border-white/50">
-            <div class="px-4 sm:px-6">
-                <ul class="flex items-center gap-2 overflow-x-auto text-xs font-semibold py-2.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                    <li>
-                        <a href="{{ route('products.index') }}" 
-                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full {{ request()->routeIs('products.index') && !request('category') ? 'bg-brand-600 text-white shadow-xs' : 'bg-gray-100/70 text-gray-700 hover:bg-brand-50 hover:text-brand-700' }} transition-colors whitespace-nowrap">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                            All Produce
-                        </a>
-                    </li>
-                    @foreach(($megaMenuCategories ?? []) as $category)
-                        <li>
-                            <a href="{{ route('categories.show', $category) }}"
-                               class="inline-flex items-center px-3 py-1.5 rounded-full text-gray-600 hover:text-brand-800 hover:bg-brand-50/80 transition-colors whitespace-nowrap {{ request()->is('categories/'.$category->slug) ? 'bg-brand-50 text-brand-800 font-bold border border-brand-200/60' : '' }}">
-                                {{ $category->name }}
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-        </nav>
+        <div class="hidden sm:block">@include('partials.category-rail')</div>
         </div>
     </header>
+
+    {{-- Category rail below sm scrolls away with the page so the sticky header stays slim --}}
+    <div class="sm:hidden mx-2 mt-2 rounded-2xl bg-white/90">@include('partials.category-rail')</div>
 
     @include('partials.flash-messages')
 
@@ -206,8 +214,8 @@
     </main>
 
     {{-- Modern Footer --}}
-    <footer class="bg-gradient-to-b from-brand-950 via-[#062013] to-[#03130b] text-emerald-100/80 mt-16 border-t border-brand-900/60">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 grid grid-cols-1 md:grid-cols-4 gap-10 text-sm">
+    <footer class="bg-gradient-to-b from-brand-950 via-[#062013] to-[#03130b] text-emerald-100/80 mt-10 sm:mt-16 border-t border-brand-900/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-14 grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-10 text-sm">
             {{-- Col 1: Brand & Pilot Zone --}}
             <div class="space-y-4">
                 <div class="flex items-center gap-2.5">
@@ -220,23 +228,24 @@
                     Farm-grown harvest, sold direct from our farms to your doorstep. Guaranteed 100% single-seller authenticity — zero middlemen, maximum freshness.
                 </p>
                 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-900/80 border border-brand-700/50 text-xs text-emerald-200">
-                    <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
                     <span>Pilot Zone: <strong>{{ config('cymarket.pilot_zone_name') }}</strong></span>
                 </div>
             </div>
 
             {{-- Col 2: Navigation --}}
             <div>
-                <h3 class="text-white font-bold text-xs uppercase tracking-wider mb-4">Quick Navigation</h3>
-                <ul class="space-y-2 text-xs">
-                    <li><a href="{{ route('products.index') }}" class="hover:text-white transition-colors flex items-center gap-1.5"><span class="text-emerald-500">›</span> All Farm Produce</a></li>
-                    <li><a href="{{ route('orders.track-form') }}" class="hover:text-white transition-colors flex items-center gap-1.5"><span class="text-emerald-500">›</span> Track Order by SMS Code</a></li>
-                    <li><a href="{{ route('cart.index') }}" class="hover:text-white transition-colors flex items-center gap-1.5"><span class="text-emerald-500">›</span> View Shopping Cart</a></li>
+                <h3 class="text-white font-bold text-xs uppercase tracking-wider mb-2 sm:mb-4">Quick Navigation</h3>
+                <ul class="space-y-0.5 sm:space-y-2 text-xs">
+                    <li><a href="{{ route('products.index') }}" class="hover:text-white transition-colors flex items-center gap-1.5 py-1.5 sm:py-0"><span class="text-emerald-500">›</span> All Farm Produce</a></li>
+                    <li><a href="{{ route('orders.track-form') }}" class="hover:text-white transition-colors flex items-center gap-1.5 py-1.5 sm:py-0"><span class="text-emerald-500">›</span> Track Order by SMS Code</a></li>
+                    <li><a href="{{ route('cart.index') }}" class="hover:text-white transition-colors flex items-center gap-1.5 py-1.5 sm:py-0"><span class="text-emerald-500">›</span> View Shopping Cart</a></li>
                     @auth
-                        <li><a href="{{ route('orders.index') }}" class="hover:text-white transition-colors flex items-center gap-1.5"><span class="text-emerald-500">›</span> My Order History</a></li>
-                        <li><a href="{{ route('account.edit') }}" class="hover:text-white transition-colors flex items-center gap-1.5"><span class="text-emerald-500">›</span> Account Settings</a></li>
+                        <li><a href="{{ route('orders.index') }}" class="hover:text-white transition-colors flex items-center gap-1.5 py-1.5 sm:py-0"><span class="text-emerald-500">›</span> My Order History</a></li>
+                        <li><a href="{{ route('account.edit') }}" class="hover:text-white transition-colors flex items-center gap-1.5 py-1.5 sm:py-0"><span class="text-emerald-500">›</span> Account Settings</a></li>
                     @else
-                        <li><a href="{{ route('login') }}" class="hover:text-white transition-colors flex items-center gap-1.5"><span class="text-emerald-500">›</span> Customer Login</a></li>
+                        <li><a href="{{ route('login') }}" class="hover:text-white transition-colors flex items-center gap-1.5 py-1.5 sm:py-0"><span class="text-emerald-500">›</span> Customer Login</a></li>
+                        <li><a href="{{ route('register') }}" class="hover:text-white transition-colors flex items-center gap-1.5 py-1.5 sm:py-0"><span class="text-emerald-500">›</span> Create an Account</a></li>
                     @endauth
                 </ul>
             </div>
@@ -304,6 +313,15 @@
     @endauth
 
     <script>
+        document.addEventListener('click', function (e) {
+            var m = document.getElementById('mobile-menu');
+            if (m && m.open && !m.contains(e.target)) m.removeAttribute('open');
+        });
+        document.addEventListener('keydown', function (e) {
+            var m = document.getElementById('mobile-menu');
+            if (e.key === 'Escape' && m && m.open) { m.removeAttribute('open'); m.querySelector('summary').focus(); }
+        });
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
                 navigator.serviceWorker.register('/sw.js').catch(function () {
@@ -329,13 +347,17 @@
             var iosModal = document.getElementById('pwa-ios-modal');
             var deferredPrompt = null;
 
+            var menuInstall = document.getElementById('pwa-install-menu');
+
             function showButton() {
+                if (menuInstall) { menuInstall.classList.remove('hidden'); menuInstall.classList.add('flex'); }
                 if (!button) return;
                 button.classList.remove('hidden');
                 button.classList.add('inline-flex');
             }
 
             function hideButton() {
+                if (menuInstall) { menuInstall.classList.add('hidden'); menuInstall.classList.remove('flex'); }
                 if (!button) return;
                 button.classList.add('hidden');
                 button.classList.remove('inline-flex');
@@ -352,6 +374,11 @@
                 e.preventDefault();
                 deferredPrompt = e;
                 showButton();
+            });
+
+            menuInstall?.addEventListener('click', function () {
+                document.getElementById('mobile-menu')?.removeAttribute('open');
+                button?.click();
             });
 
             button?.addEventListener('click', function () {

@@ -72,10 +72,20 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('status')->badge()->formatStateUsing(fn (OrderStatus $state) => $state->label())->color(fn (OrderStatus $state) => $state->color()),
                 Tables\Columns\TextColumn::make('total')->money('GHS')->sortable(),
                 Tables\Columns\TextColumn::make('delivery_phone')->label('Phone')->toggleable(),
+                Tables\Columns\TextColumn::make('scheduled_delivery_at')->label('Delivery')->dateTime('D d M, H:i')->sortable()->placeholder('-'),
                 Tables\Columns\TextColumn::make('created_at')->label('Placed')->dateTime('d M Y, H:i')->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(collect(OrderStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])),
+                Tables\Filters\Filter::make('scheduled_delivery_at')
+                    ->label('Scheduled delivery')
+                    ->form([
+                        Forms\Components\DatePicker::make('delivery_from')->label('Delivery from'),
+                        Forms\Components\DatePicker::make('delivery_until')->label('Delivery until'),
+                    ])
+                    ->query(fn ($query, array $data) => $query
+                        ->when($data['delivery_from'] ?? null, fn ($q, $date) => $q->whereDate('scheduled_delivery_at', '>=', $date))
+                        ->when($data['delivery_until'] ?? null, fn ($q, $date) => $q->whereDate('scheduled_delivery_at', '<=', $date))),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('from'),

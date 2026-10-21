@@ -73,9 +73,9 @@ class EmailNotificationService
     protected function buildMessage(Order $order, OrderEventType $event): string
     {
         return match ($event) {
-            OrderEventType::OrderPlaced => 'Thank you! We have received your order and will confirm it once payment is completed.',
+            OrderEventType::OrderPlaced => 'Thank you! We have received your order and will confirm it once payment is completed.'.($order->scheduledDeliveryLabel() ? ' Scheduled delivery: '.$order->scheduledDeliveryLabel().'.' : ''),
             OrderEventType::PaymentReceived => 'We have received your payment. Thank you!',
-            OrderEventType::OrderConfirmed => 'Your order is confirmed and has been queued for processing.',
+            OrderEventType::OrderConfirmed => 'Your order is confirmed and has been queued for processing.'.($order->scheduledDeliveryLabel() ? ' Scheduled delivery: '.$order->scheduledDeliveryLabel().'.' : ''),
             OrderEventType::OrderProcessing => 'Your order is being prepared at our farm store.',
             OrderEventType::OrderDispatched => 'Your order has been dispatched for delivery to '.$order->delivery_address_line.'.',
             OrderEventType::OrderDelivered => 'Your order has been delivered. Enjoy your farm-fresh produce!',

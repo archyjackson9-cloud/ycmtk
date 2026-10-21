@@ -45,7 +45,10 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
             ])
             ->assets([
-                Css::make('admin-glass-theme', asset('css/filament/admin-glass.css')),
+                // Versioned by content hash: served as a plain static file, so
+                // without a changing query string browsers/CDNs keep a stale copy
+                // lacking newer classes (e.g. the .cy-report-* hub cards).
+                Css::make('admin-glass-theme', asset('css/filament/admin-glass.css').'?v='.substr((string) md5_file(public_path('css/filament/admin-glass.css')), 0, 12)),
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,

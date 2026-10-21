@@ -132,6 +132,10 @@
                         <p class="text-brand-800/80">Dispatched directly from harvest beds in temperature-safe packaging.</p>
                     </div>
 
+                    <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 font-semibold">
+                        {{ app(\App\Services\DeliveryScheduleService::class)->noticeLabel() }}
+                    </div>
+
                     <div class="pt-2">
                         <a href="{{ route('checkout.index') }}" 
                            class="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-extrabold text-sm py-3.5 px-6 rounded-full shadow-lg shadow-brand-600/25 hover:shadow-xl hover:shadow-brand-600/35 hover:-translate-y-0.5 active:scale-[0.98] transition-all">

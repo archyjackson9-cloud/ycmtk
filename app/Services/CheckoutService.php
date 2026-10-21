@@ -47,7 +47,12 @@ class CheckoutService
             throw new CheckoutException(['Your cart is empty.']);
         }
 
-        $result = DB::transaction(function () use ($cart, $delivery, $user) {
+        // Computed once before the transaction opens, so nothing extra runs
+        // inside the lock.
+        $placedAt = now();
+        $scheduledDeliveryAt = app(DeliveryScheduleService::class)->deliveryAt($placedAt);
+
+        $result = DB::transaction(function () use ($cart, $delivery, $user, $placedAt, $scheduledDeliveryAt) {
             $subtotal = $cart->subtotal();
             $zone = isset($delivery['delivery_zone_id']) ? DeliveryZone::find($delivery['delivery_zone_id']) : null;
             $deliveryFee = $zone?->fee() ?? app(SettingsService::class)->deliveryFee();
@@ -73,7 +78,8 @@ class CheckoutService
                 'total' => max(0, $subtotal + $deliveryFee - $discount),
                 'coupon_code' => $couponCode,
                 'notes' => $delivery['notes'] ?? null,
-                'placed_at' => now(),
+                'placed_at' => $placedAt,
+                'scheduled_delivery_at' => $scheduledDeliveryAt,
             ]);
 
             foreach ($cart->items as $item) {

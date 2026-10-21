@@ -34,12 +34,19 @@ class OrderStatusUpdated extends Notification
         ];
     }
 
+    protected function deliverySuffix(): string
+    {
+        $label = $this->order->scheduledDeliveryLabel();
+
+        return $label ? " Scheduled delivery: {$label}." : '';
+    }
+
     protected function message(): string
     {
         return match ($this->event) {
-            OrderEventType::OrderPlaced => "Order {$this->order->order_number} has been received.",
+            OrderEventType::OrderPlaced => "Order {$this->order->order_number} has been received.".$this->deliverySuffix(),
             OrderEventType::PaymentReceived => "Payment received for order {$this->order->order_number}.",
-            OrderEventType::OrderConfirmed => "Order {$this->order->order_number} is confirmed and queued for processing.",
+            OrderEventType::OrderConfirmed => "Order {$this->order->order_number} is confirmed and queued for processing.".$this->deliverySuffix(),
             OrderEventType::OrderProcessing => "Order {$this->order->order_number} is being prepared.",
             OrderEventType::OrderDispatched => "Order {$this->order->order_number} is on its way.",
             OrderEventType::OrderDelivered => "Order {$this->order->order_number} has been delivered.",

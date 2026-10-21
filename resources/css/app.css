@@ -236,3 +236,87 @@
             radial-gradient(at 50% 90%, rgba(5, 35, 18, 0.8) 0px, transparent 60%);
     }
 }
+
+/* ======================================================================
+   Mobile / low-bandwidth tuning
+   - Touch screens and narrow viewports get cheap, near-opaque glass (no
+     backdrop-filter) and a scrolling (not fixed) background: both are
+     costly to composite on mid-range Android phones.
+   - Form controls are 16px below `sm` so iOS Safari does not zoom on focus.
+   - Keyboard focus gets a visible ring; motion is reduced on request.
+   Desktop (>= 1024px with hover) keeps the full Liquid Glass look.
+   ====================================================================== */
+@media (max-width: 1023px), (hover: none) {
+    .glass-surface,
+    .glass-surface-subtle,
+    .glass-card,
+    .glass-dark,
+    .glass-dark-card,
+    .liquid-glass,
+    .liquid-glass-strong,
+    .liquid-glass-dark,
+    .liquid-nav,
+    .liquid-input {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .liquid-glass,
+    .liquid-glass-strong,
+    .liquid-nav {
+        background-color: rgba(255, 255, 255, 0.94);
+    }
+
+    .liquid-input {
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+
+    .liquid-body-mesh {
+        background-attachment: scroll;
+    }
+
+    /* Tailwind blur utilities used ad hoc on cards/badges */
+    .backdrop-blur-xl,
+    .backdrop-blur-md {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+@media (max-width: 639px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not([type='range']),
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    overflow-x: clip;
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-brand-600, #15803d);
+    outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline-offset: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

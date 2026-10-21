@@ -114,9 +114,9 @@ class SmsNotificationService implements SmsGatewayInterface
     protected function buildMessage(Order $order, OrderEventType $event): string
     {
         $defaults = [
-            OrderEventType::OrderPlaced->value => 'CY-Market: Thank you! Your order {order_number} has been received. We will confirm once payment is completed.',
+            OrderEventType::OrderPlaced->value => 'CY-Market: Thank you! Your order {order_number} has been received. We will confirm once payment is completed.{delivery}',
             OrderEventType::PaymentReceived->value => 'CY-Market: Payment received for order {order_number}. Total GHS {total}. Thank you!',
-            OrderEventType::OrderConfirmed->value => 'CY-Market: Order {order_number} is confirmed and queued for processing.',
+            OrderEventType::OrderConfirmed->value => 'CY-Market: Order {order_number} is confirmed and queued for processing.{delivery}',
             OrderEventType::OrderProcessing->value => 'CY-Market: Order {order_number} is being prepared at our farm store.',
             OrderEventType::OrderDispatched->value => 'CY-Market: Order {order_number} has been dispatched for delivery to {address}.',
             OrderEventType::OrderDelivered->value => 'CY-Market: Order {order_number} has been delivered. Enjoy your farm-fresh produce!',
@@ -131,6 +131,7 @@ class SmsNotificationService implements SmsGatewayInterface
             '{order_number}' => $order->order_number,
             '{total}' => number_format((float) $order->total, 2),
             '{address}' => $order->delivery_address_line,
+            '{delivery}' => $order->scheduledDeliveryLabel() ? ' Delivery: '.$order->scheduledDeliveryLabel().'.' : '',
             '{reason}' => $order->on_hold_reason ?? $order->cancelled_reason ?? '',
         ]);
     }

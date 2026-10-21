@@ -23,6 +23,12 @@
         </div>
     </div>
 
+    @if($order->scheduledDeliveryLabel())
+        <div class="p-4 rounded-2xl bg-brand-50/70 border border-brand-200/50 text-xs text-brand-900 font-bold mb-6">
+            Scheduled delivery: {{ $order->scheduledDeliveryLabel() }}
+        </div>
+    @endif
+
     {{-- Tracking Timeline Glass Card --}}
     <div class="liquid-glass rounded-[28px] p-6 sm:p-8 mb-8 shadow-xs">
         <h2 class="text-xs font-extrabold uppercase tracking-wider text-gray-400 mb-4">Harvest & Delivery Status</h2>

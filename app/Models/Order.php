@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\RefundPreference;
+use App\Services\DeliveryScheduleService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,9 +24,20 @@ class Order extends Model
         'delivery_address_line', 'delivery_landmark', 'delivery_latitude', 'delivery_longitude',
         'delivery_fee', 'subtotal', 'discount_total', 'total', 'coupon_code',
         'notes', 'cancelled_reason', 'on_hold_reason', 'refund_or_credit_preference',
-        'placed_at', 'paid_at', 'processing_at', 'dispatched_at', 'delivered_at',
+        'placed_at', 'scheduled_delivery_at', 'paid_at', 'processing_at', 'dispatched_at', 'delivered_at',
         'completed_at', 'cancelled_at',
     ];
+
+    /**
+     * "Saturday 24 Oct, 11:00 AM" - null for orders placed before the
+     * delivery schedule existed.
+     */
+    public function scheduledDeliveryLabel(): ?string
+    {
+        return $this->scheduled_delivery_at
+            ? app(DeliveryScheduleService::class)->formatScheduled($this->scheduled_delivery_at)
+            : null;
+    }
 
     protected function casts(): array
     {
@@ -39,6 +51,7 @@ class Order extends Model
             'discount_total' => 'decimal:2',
             'total' => 'decimal:2',
             'placed_at' => 'datetime',
+            'scheduled_delivery_at' => 'datetime',
             'paid_at' => 'datetime',
             'processing_at' => 'datetime',
             'dispatched_at' => 'datetime',
