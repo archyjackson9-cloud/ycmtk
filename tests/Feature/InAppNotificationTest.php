@@ -48,6 +48,7 @@ class InAppNotificationTest extends TestCase
             'delivery_zone_id' => $zone->id,
             'address_line' => '1 Farm Road, Tarkwa',
             'guest_name' => 'Kofi Mensah',
+            'guest_email' => 'guest@example.test',
         ]);
 
         $order = Order::firstOrFail();
@@ -73,6 +74,7 @@ class InAppNotificationTest extends TestCase
             'delivery_zone_id' => $zone->id,
             'address_line' => '2 Farm Road, Tarkwa',
             'guest_name' => 'Ama Owusu',
+            'guest_email' => 'guest@example.test',
         ]);
 
         Notification::assertNotSentTo($deactivated, NewOrderPlaced::class);
@@ -123,6 +125,7 @@ class InAppNotificationTest extends TestCase
             'delivery_zone_id' => $zone->id,
             'address_line' => '4 Farm Road, Tarkwa',
             'guest_name' => 'Guest Buyer',
+            'guest_email' => 'guest@example.test',
         ]);
 
         $order = Order::firstOrFail();

@@ -154,7 +154,7 @@
                             class="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 disabled:from-gray-300 disabled:to-gray-400 text-white font-extrabold text-sm py-3 sm:py-3.5 px-4 sm:px-6 min-h-11 rounded-full shadow-lg shadow-brand-600/25 hover:shadow-xl hover:shadow-brand-600/35 hover:-translate-y-0.5 active:scale-[0.98] transition-all"
                             {{ $product->is_out_of_stock ? 'disabled' : '' }}>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        <span>{{ $product->is_out_of_stock ? 'Sold Out' : 'Add to Fresh Cart' }}</span>
+                        <span>{{ $product->is_out_of_stock ? 'Sold Out' : 'Add to Cart' }}</span>
                     </button>
                 </form>
 

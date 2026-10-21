@@ -22,7 +22,7 @@ use RuntimeException;
 /**
  * Order Management & Lifecycle Service (TOR §5.2, §6.4). Owns every
  * status transition, keeps the audit trail (order_status_histories), fires
- * the mandatory SMS triggers (TOR §6.6) plus the matching email and in-app
+ * the mandatory SMS triggers (TOR §6.6) plus the queued customer emails and in-app
  * (bell) notification whenever the order has an address/account to send
  * them to, and implements the fallback behaviours from TOR §11.
  */
@@ -44,6 +44,7 @@ class OrderService
     public function notifyPlaced(Order $order): void
     {
         $this->notify($order, OrderEventType::OrderPlaced);
+        $this->email->queueOrderPlaced($order);
         $this->notifyStaffOfNewOrder($order);
     }
 
@@ -108,6 +109,7 @@ class OrderService
             }
 
             $this->notify($order, OrderEventType::PaymentFailed);
+            $this->email->queuePaymentFailed($order, $payment);
 
             return $order->fresh();
         });
@@ -177,7 +179,7 @@ class OrderService
                 $this->stock->restockForOrder($order, "Restocked - order {$order->order_number} cancelled: {$reason}");
             }
 
-            $this->transition($order, OrderStatus::Cancelled, $actor, $reason);
+            $this->transition($order, OrderStatus::Cancelled, $actor, $reason, $notify);
             $order->update(['cancelled_reason' => $reason, 'cancelled_at' => now()]);
 
             if ($wasPaid) {
@@ -216,19 +218,30 @@ class OrderService
         return $this->updateStatus($order, OrderStatus::Processing, $actor, 'Customer chose credit for next-day delivery; resuming fulfilment.');
     }
 
-    protected function transition(Order $order, OrderStatus $to, ?User $actor = null, ?string $note = null): void
+    /**
+     * The single place every order status change is written. It also queues
+     * the customer's status-change email (sent after the surrounding
+     * transaction commits, deduplicated per history row, skipped when the
+     * status did not actually change), so no caller - admin action, console
+     * sweep, webhook, customer self-cancel - can change a status silently.
+     */
+    protected function transition(Order $order, OrderStatus $to, ?User $actor = null, ?string $note = null, bool $notifyCustomer = true): void
     {
         $from = $order->status;
 
         $order->update(['status' => $to]);
 
-        OrderStatusHistory::create([
+        $history = OrderStatusHistory::create([
             'order_id' => $order->id,
             'from_status' => $from,
             'to_status' => $to,
             'note' => $note,
             'changed_by' => $actor?->id,
         ]);
+
+        if ($notifyCustomer && $from !== $to) {
+            $this->email->queueStatusChange($order, $history);
+        }
     }
 
     protected function notifyInventoryOfficers(Order $order, string $message): void
@@ -244,15 +257,15 @@ class OrderService
 
     /**
      * Every customer-facing order-lifecycle event goes through here so SMS
-     * (TOR §6.6, mandatory), email, and the storefront's in-app bell
-     * (both best-effort, only sent when there's an address/account to send
-     * them to) always stay in sync - callers should never reach for
-     * $this->sms/$this->email, or notify $order->user directly, themselves.
+     * (TOR §6.6, mandatory) and the storefront's in-app bell stay in sync -
+     * callers should never reach for $this->sms, or notify $order->user
+     * directly, themselves. Emails are NOT sent from here: they are queued
+     * by transition() (status changes), notifyPlaced() and
+     * markPaymentFailed() so they are tied to what actually happened.
      */
     protected function notify(Order $order, OrderEventType $event): void
     {
         $this->sms->sendOrderEvent($order, $event);
-        $this->email->sendOrderEvent($order, $event);
 
         // Guests have no account to show a bell in.
         $order->user?->notify(new OrderStatusUpdated($order, $event));

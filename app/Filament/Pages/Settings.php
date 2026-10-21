@@ -57,6 +57,7 @@ class Settings extends Page implements HasForms
             'manual_payment_account_number' => $settings->manualPaymentAccountNumber(),
             'manual_payment_network' => $settings->manualPaymentNetwork(),
             'manual_payment_instructions' => $settings->manualPaymentInstructions(),
+            'order_emails_enabled' => $settings->orderEmailsEnabled(),
         ], $smsTemplates));
     }
 
@@ -138,6 +139,14 @@ class Settings extends Page implements HasForms
                             ->columnSpanFull(),
                     ])->columns(3),
 
+                Forms\Components\Section::make('Email Notifications')
+                    ->description('Customers are emailed when they place an order and whenever its status changes.')
+                    ->schema([
+                        Forms\Components\Toggle::make('order_emails_enabled')
+                            ->label('Send order emails')
+                            ->helperText('Turn off to stop all automatic order emails. SMS and in-app notifications are not affected.'),
+                    ]),
+
                 Forms\Components\Section::make('SMS Templates')
                     ->description('Sent on every order-lifecycle event (TOR §6.6).')
                     ->schema($smsFields)
@@ -164,6 +173,8 @@ class Settings extends Page implements HasForms
         $settings->set('manual_payment_account_name', (string) ($state['manual_payment_account_name'] ?? ''));
         $settings->set('manual_payment_account_number', (string) ($state['manual_payment_account_number'] ?? ''));
         $settings->set('manual_payment_instructions', (string) ($state['manual_payment_instructions'] ?? ''));
+
+        $settings->set('order_emails_enabled', ! empty($state['order_emails_enabled']) ? '1' : '0');
 
         foreach (OrderEventType::cases() as $event) {
             $key = 'sms_template_'.$event->value;

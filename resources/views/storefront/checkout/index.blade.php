@@ -53,8 +53,8 @@
                             @error('guest_name')<p id="guest_name-error" role="alert" class="mt-1 text-xs font-semibold text-rose-700">{{ $message }}</p>@enderror
                         </div>
                         <div>
-                            <label for="guest_email" class="block text-xs font-bold text-gray-700 mb-1.5">Email (optional)</label>
-                            <input type="email" id="guest_email" name="guest_email" value="{{ old('guest_email') }}" autocomplete="email" inputmode="email"
+                            <label for="guest_email" class="block text-xs font-bold text-gray-700 mb-1.5">Email</label>
+                            <input type="email" id="guest_email" name="guest_email" value="{{ old('guest_email') }}" required autocomplete="email" inputmode="email"
                                    placeholder="kwame@example.com" @error('guest_email') aria-invalid="true" aria-describedby="guest_email-error" @enderror
                                    class="w-full rounded-2xl liquid-input text-sm px-3.5 py-3 sm:py-2.5 focus:outline-none">
                             @error('guest_email')<p id="guest_email-error" role="alert" class="mt-1 text-xs font-semibold text-rose-700">{{ $message }}</p>@enderror

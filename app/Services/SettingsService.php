@@ -26,6 +26,15 @@ class SettingsService
         Cache::forget('setting:'.$key);
     }
 
+    /**
+     * Master switch for customer order emails (Admin > Settings). On by
+     * default; the stored value may arrive as "0"/"1"/bool.
+     */
+    public function orderEmailsEnabled(): bool
+    {
+        return filter_var($this->get('order_emails_enabled', true), FILTER_VALIDATE_BOOLEAN);
+    }
+
     public function deliveryFee(): float
     {
         return (float) $this->get('delivery_fee', config('cymarket.default_delivery_fee'));

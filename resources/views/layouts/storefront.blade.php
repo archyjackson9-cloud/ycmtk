@@ -73,9 +73,9 @@
             <form action="{{ route('products.index') }}" method="GET" class="flex-1 min-w-0 max-w-xl mx-auto" role="search">
                 <div class="relative group">
                     <label for="site-search" class="sr-only">Search products</label>
-                    <input type="search" id="site-search" name="q" value="{{ request('q') }}" placeholder="Search produce..." enterkeyhint="search" autocomplete="off"
-                           class="w-full rounded-full liquid-input py-2 sm:py-2.5 pl-9 sm:pl-10 pr-11 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-all">
-                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors pointer-events-none">
+                    <input type="search" id="site-search" name="q" value="{{ request('q') }}" placeholder="Search" enterkeyhint="search" autocomplete="off"
+                           class="w-full rounded-full liquid-input py-2 sm:py-2.5 pl-3 sm:pl-10 pr-11 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-all">
+                    <div class="hidden sm:block absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors pointer-events-none">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     </div>
                     <button type="submit" aria-label="Search" class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-brand-600 p-1.5 text-white hover:bg-brand-700 active:scale-95 transition-all shadow-xs">
@@ -98,7 +98,7 @@
                                 </span>
                             @endif
                         </button>
-                        <div id="notif-bell-panel" class="hidden fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-16 sm:top-auto sm:mt-2 sm:w-80 sm:max-w-[90vw] liquid-glass rounded-2xl shadow-lg overflow-hidden z-50">
+                        <div id="notif-bell-panel" class="hidden fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-[4.25rem] sm:top-auto sm:mt-2 sm:w-80 sm:max-w-[90vw] liquid-glass rounded-2xl shadow-lg overflow-hidden z-50">
                             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                 <span class="text-xs font-extrabold uppercase tracking-wider text-gray-700">Notifications</span>
                                 @if(($unreadNotificationCount ?? 0) > 0)
@@ -142,7 +142,7 @@
                     <summary aria-label="Menu" class="list-none [&::-webkit-details-marker]:hidden cursor-pointer inline-flex items-center justify-center h-10 w-10 rounded-full liquid-glass text-brand-900">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </summary>
-                    <div class="fixed left-2 right-2 top-16 z-50 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 p-2 text-sm">
+                    <div class="fixed left-2 right-2 top-[4.25rem] z-50 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 p-2 text-sm">
                         @auth
                             <p class="px-3 pt-2 pb-1 text-xs text-gray-500 truncate">Signed in as <strong class="text-gray-800">{{ auth()->user()->name }}</strong></p>
                             <a href="{{ route('account.edit') }}" class="flex items-center min-h-11 px-3 rounded-xl font-semibold text-gray-800 hover:bg-brand-50">Account</a>

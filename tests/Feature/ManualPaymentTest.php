@@ -45,6 +45,7 @@ class ManualPaymentTest extends TestCase
             'delivery_zone_id' => $zone->id,
             'address_line' => '7 Mine Road, Tarkwa',
             'guest_name' => 'Kwesi Darko',
+            'guest_email' => 'guest@example.test',
         ]);
 
         return Order::firstOrFail();
@@ -86,6 +87,7 @@ class ManualPaymentTest extends TestCase
             'delivery_zone_id' => $zone->id,
             'address_line' => '2 Lake Road, Tarkwa',
             'guest_name' => 'Adwoa Nyarko',
+            'guest_email' => 'guest@example.test',
         ]);
 
         $response->assertRedirect(route('checkout.index'));
@@ -109,6 +111,7 @@ class ManualPaymentTest extends TestCase
             'delivery_zone_id' => $zone->id,
             'address_line' => '10 River Road, Tarkwa',
             'guest_name' => 'Abena Owusu',
+            'guest_email' => 'guest@example.test',
         ]);
 
         $order = Order::firstOrFail();

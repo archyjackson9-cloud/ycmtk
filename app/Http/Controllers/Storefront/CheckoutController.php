@@ -77,7 +77,7 @@ class CheckoutController extends Controller
 
         if (! $request->user()) {
             $rules['guest_name'] = ['required', 'string', 'max:255'];
-            $rules['guest_email'] = ['nullable', 'email', 'max:255'];
+            $rules['guest_email'] = ['required', 'email', 'max:255'];
         }
 
         $data = $request->validate($rules);

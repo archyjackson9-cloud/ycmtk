@@ -167,10 +167,11 @@ services:
     depends_on:
       - db
 
-  # No jobs are dispatched onto the queue yet (everything in this app runs
-  # synchronously), so this is a cheap, idle safety net for when that
-  # changes rather than something load-bearing today. Remove this service
-  # if you'd rather not run it until it's actually needed.
+  # REQUIRED: customer order emails (order placed, every status change) are
+  # queued jobs (App\Jobs\SendOrderEmail), delivered by this worker with
+  # retry/backoff. If this container is not running, no emails go out.
+  # QUEUE_CONNECTION must be "database" (or redis) in production, never
+  # "sync". After deploying new code run `docker compose restart queue`.
   queue:
     image: ${APP_IMAGE:-ghcr.io/archyjackson9-cloud/ycmtk:latest}
     restart: unless-stopped

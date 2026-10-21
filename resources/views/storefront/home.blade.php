@@ -31,7 +31,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-24 relative z-10">
             <div class="grid lg:grid-cols-12 gap-6 sm:gap-12 items-center">
                 {{-- Left Editorial Headline: slides share one grid cell and cross-fade --}}
-                <div class="lg:col-span-7 grid text-center lg:text-left">
+                <div class="lg:col-span-7 grid grid-cols-[minmax(0,1fr)] text-center lg:text-left">
                     @foreach($slides as $i => $banner)
                         <div data-hero-slide class="col-start-1 row-start-1 space-y-3 sm:space-y-6 transition-opacity duration-700 {{ $i === 0 ? '' : 'opacity-0 invisible' }}"
                              role="group" aria-roledescription="slide" aria-label="{{ $i + 1 }} of {{ $slides->count() }}">

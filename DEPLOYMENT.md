@@ -200,10 +200,16 @@ The `MOMO_*` env vars below still exist for when that happens:
 
 ## Order-tracking-update emails
 
-Every SMS trigger (TOR §6.6) now also sends a matching email, whenever the
-order has an email address on file (a registered customer's account email,
-or the optional email field at guest checkout) - logged to the same
-Super-Admin-visible notification log as SMS. This rides on Laravel's own
+The customer is emailed when they place an order and on every order status
+change (confirmed, preparing, out for delivery, delivered, completed,
+cancelled, on hold) plus when a payment is rejected. Email is required at
+guest checkout (registered customers use their account email). Emails are
+**queued jobs** sent after the order is saved, retried with backoff, and
+logged (with status/attempts) in the Super-Admin notification log - so the
+`queue` container MUST be running and `QUEUE_CONNECTION` must be `database`
+(or redis), never `sync`. After each deploy run `docker compose restart queue`
+so the worker picks up new code. Super Admin can switch order emails off in
+Admin > Settings, and staff can resend from an order's page. This rides on Laravel's own
 mail config (`MAIL_MAILER` etc., already in `.env.docker.example`):
 `MAIL_MAILER=log` (the default) writes emails to the log instead of
 sending them, so this works with zero mail credentials out of the box.

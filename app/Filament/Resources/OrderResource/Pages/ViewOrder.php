@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
+use App\Services\Notifications\EmailNotificationService;
+use Filament\Actions\Action;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewOrder extends ViewRecord
@@ -19,6 +22,16 @@ class ViewOrder extends ViewRecord
         return [
             OrderResource::updateStatusHeaderAction(),
             OrderResource::cancelHeaderAction(),
+            Action::make('resendEmail')
+                ->label('Resend status email')
+                ->icon('heroicon-o-envelope')
+                ->requiresConfirmation()
+                ->visible(fn () => auth()->user()?->hasAnyRole([config('cymarket.roles.super_admin'), config('cymarket.roles.inventory_officer')])
+                    && filled(app(EmailNotificationService::class)->recipientFor($this->record)))
+                ->action(function () {
+                    app(EmailNotificationService::class)->resend($this->record);
+                    Notification::make()->title('Email queued')->success()->send();
+                }),
         ];
     }
 

@@ -127,6 +127,7 @@ class DeliveryScheduleTest extends TestCase
             'delivery_zone_id' => $zone->id,
             'address_line' => '7 Mine Road, Tarkwa',
             'guest_name' => 'Kwesi Darko',
+            'guest_email' => 'guest@example.test',
         ]);
 
         $order = Order::firstOrFail();

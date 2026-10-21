@@ -447,3 +447,73 @@
     flex-direction: column;
     gap: 1.5rem;
 }
+
+/* ==========================================================================
+   Phones / touch: cheaper rendering and tighter spacing (desktop unchanged)
+   ========================================================================== */
+@media (max-width: 1023px), (hover: none) {
+    .fi-body,
+    .dark .fi-body {
+        background-attachment: scroll;
+    }
+
+    .fi-sidebar,
+    .fi-topbar > nav,
+    .fi-wi-stats-overview-stat,
+    .fi-ta-ctn,
+    .fi-section,
+    .fi-in-ctn {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    .fi-wi-stats-overview-stat:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 639px) {
+    .fi-main {
+        padding-top: 1rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+
+    .fi-page {
+        row-gap: 1rem;
+    }
+
+    .fi-header-heading {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+    }
+
+    .fi-wi-stats-overview-stats {
+        gap: 0.75rem !important;
+    }
+
+    .fi-section,
+    .fi-ta-ctn,
+    .fi-in-ctn {
+        border-radius: 0.75rem !important;
+    }
+
+    /* Tables scroll inside their card instead of stretching the page */
+    .fi-ta-content,
+    .cy-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* 16px fields: no iOS zoom on focus */
+    .fi-input,
+    .fi-select-input,
+    .fi-fo-textarea textarea {
+        font-size: 16px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fi-wi-stats-overview-stat {
+        transition: none;
+    }
+}
