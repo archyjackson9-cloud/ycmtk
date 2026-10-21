@@ -12,12 +12,12 @@
 <body class="h-full bg-gradient-to-br from-[#062013] via-[#093520] to-[#04170d] text-gray-900 antialiased font-sans relative overflow-x-hidden flex flex-col justify-center">
 
     {{-- Ambient Background Glow Orbs --}}
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[40rem] h-[25rem] bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute bottom-0 right-10 w-[30rem] h-[20rem] bg-accent-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-[40rem] h-[25rem] bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="hidden sm:block absolute bottom-0 right-10 w-[30rem] h-[20rem] bg-accent-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-    <div class="min-h-full flex flex-col items-center justify-center px-4 py-12 relative z-10">
+    <div class="min-h-full flex flex-col items-center justify-center px-4 py-6 sm:py-12 relative z-10">
         {{-- Brand Header --}}
-        <a href="{{ route('home') }}" class="mb-8 flex items-center gap-3 group">
+        <a href="{{ route('home') }}" class="mb-4 sm:mb-8 flex items-center gap-3 group">
             <div class="h-11 w-11 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-black text-base shadow-lg shadow-brand-500/25 group-hover:scale-105 transition-transform border border-white/20">
                 CY
             </div>
@@ -28,14 +28,14 @@
         </a>
 
         {{-- Glass Card Container --}}
-        <div class="w-full max-w-md liquid-glass-strong rounded-[32px] shadow-2xl shadow-black/30 p-8 sm:p-10 space-y-6">
+        <div class="w-full max-w-md liquid-glass-strong rounded-3xl sm:rounded-[32px] shadow-2xl shadow-black/30 p-5 sm:p-10 space-y-4 sm:space-y-6">
             @include('partials.flash-messages')
             @yield('content')
         </div>
 
         {{-- Return to storefront --}}
-        <div class="mt-8 text-center">
-            <a href="{{ route('home') }}" class="text-xs font-semibold text-emerald-200/80 hover:text-white transition-colors flex items-center gap-1.5">
+        <div class="mt-5 sm:mt-8 text-center">
+            <a href="{{ route('home') }}" class="py-2 text-xs font-semibold text-emerald-200/80 hover:text-white transition-colors flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>Back to CY-Market storefront</span>
             </a>
