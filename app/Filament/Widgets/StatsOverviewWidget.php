@@ -2,66 +2,85 @@
 
 namespace App\Filament\Widgets;
 
-use App\Enums\OrderStatus;
-use App\Models\Order;
-use App\Services\ReportingService;
+use App\Filament\Resources\OrderResource;
+use App\Filament\Resources\PaymentResource;
+use App\Filament\Resources\ProductResource;
+use App\Support\AdminSnapshot;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 /**
  * Top-of-dashboard KPI cards (TOR §6.11 Reporting & Management Dashboard).
  *
- * RBAC (TOR §6.10): Super Admin sees every card. The Inventory Officer sees
- * the operational cards only (orders awaiting action, low stock) - sales
- * revenue and customer counts are financial/commercial. Marketing and
- * Support roles have no order, stock or financial access, so they get no
- * cards at all. Figures are intentionally coarse (today + pending counts)
- * so they load fast.
+ * Each card is shown only when the role may open the screen it links to
+ * (TOR §6.10): sales = Super Admin; orders/deliveries = anyone who can see
+ * Orders; transfers to confirm = whoever can open Payments; low stock =
+ * whoever can open Products. Numbers come from AdminSnapshot, which caches
+ * briefly and shares one query set with the nav badges. Polling is off
+ * (audit A-01): the page refreshes on navigation, and the bell polls.
  */
 class StatsOverviewWidget extends BaseWidget
 {
     protected static ?int $sort = 1;
 
+    protected static ?string $pollingInterval = null;
+
+    protected int|string|array $columnSpan = 'full';
+
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole([
-            config('cymarket.roles.super_admin'),
-            config('cymarket.roles.inventory_officer'),
-        ]) ?? false;
+        return OrderResource::canViewAny() || ProductResource::canViewAny();
     }
 
     protected function getStats(): array
     {
-        $reporting = app(ReportingService::class);
-        $isSuperAdmin = auth()->user()?->isSuperAdmin() ?? false;
-
-        $inventory = $reporting->inventoryReport();
-        $pendingOrders = Order::whereIn('status', [OrderStatus::PendingPayment, OrderStatus::Paid])->count();
-
+        $user = auth()->user();
+        $counts = AdminSnapshot::counts();
         $stats = [];
 
-        if ($isSuperAdmin) {
-            $todaySales = $reporting->salesSummary(now()->startOfDay(), now()->endOfDay());
+        if ($user?->isSuperAdmin()) {
+            $sales = AdminSnapshot::sales();
 
-            $stats[] = Stat::make("Today's Sales", 'GHS '.number_format($todaySales['net_revenue'], 2))
-                ->description($todaySales['order_count'].' paid order(s) today, net of refunds')
-                ->color('success');
+            foreach (['today' => "Today's sales", 'week' => 'This week', 'month' => 'This month'] as $key => $label) {
+                $stats[] = Stat::make($label, 'GHS '.number_format($sales[$key]['net_revenue'], 2))
+                    ->description($sales[$key]['order_count'].' paid '.($sales[$key]['order_count'] === 1 ? 'order' : 'orders'))
+                    ->descriptionIcon('heroicon-m-banknotes')
+                    ->color('success');
+            }
         }
 
-        $stats[] = Stat::make('Orders Awaiting Action', (string) $pendingOrders)
-            ->description('Pending payment or awaiting processing')
-            ->color($pendingOrders > 0 ? 'warning' : 'success');
+        if (OrderResource::canViewAny()) {
+            $stats[] = Stat::make('Orders to process', (string) $counts['needs_action'])
+                ->description($counts['needs_action'] > 0 ? 'Paid or on hold - start here' : 'Nothing waiting')
+                ->descriptionIcon($counts['needs_action'] > 0 ? 'heroicon-m-bolt' : 'heroicon-m-check-circle')
+                ->color($counts['needs_action'] > 0 ? 'warning' : 'success')
+                ->url(OrderResource::getUrl('index', ['activeTab' => 'needs_action']));
+        }
 
-        $stats[] = Stat::make('Low Stock Products', (string) $inventory['low_stock'])
-            ->description($inventory['out_of_stock'].' fully out of stock')
-            ->color($inventory['low_stock'] > 0 ? 'danger' : 'success');
+        if (PaymentResource::canViewAny()) {
+            $stats[] = Stat::make('Transfers to confirm', (string) $counts['pending_transfers'])
+                ->description($counts['pending_transfers'] > 0 ? 'Check the account, then confirm' : 'All confirmed')
+                ->descriptionIcon($counts['pending_transfers'] > 0 ? 'heroicon-m-clock' : 'heroicon-m-check-circle')
+                ->color($counts['pending_transfers'] > 0 ? 'warning' : 'success')
+                ->url(PaymentResource::getUrl('index', ['activeTab' => 'to_confirm']));
+        }
 
-        if ($isSuperAdmin) {
-            $newCustomersToday = $reporting->customerReport(now()->startOfDay(), now()->endOfDay())['new_customers'];
+        if (OrderResource::canViewAny()) {
+            $stats[] = Stat::make("Today's deliveries", (string) $counts['deliveries_today'])
+                ->description('Scheduled for today, not yet delivered')
+                ->descriptionIcon('heroicon-m-truck')
+                ->color($counts['deliveries_today'] > 0 ? 'info' : 'gray')
+                ->url(OrderResource::getUrl('index', ['activeTab' => 'today']));
+        }
 
-            $stats[] = Stat::make('New Customers Today', (string) $newCustomersToday)
-                ->description('Registered accounts with the Customer role')
-                ->color('info');
+        if (ProductResource::canViewAny()) {
+            $attention = $counts['low_stock'] + $counts['out_of_stock'] > 0;
+
+            $stats[] = Stat::make('Low stock', (string) $counts['low_stock'])
+                ->description($counts['out_of_stock'].' out of stock')
+                ->descriptionIcon($attention ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
+                ->color($attention ? 'danger' : 'success')
+                ->url(ProductResource::getUrl('index', ['tableFilters' => ['low_stock' => ['isActive' => true]]]));
         }
 
         return $stats;

@@ -2,18 +2,18 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Widgets\LowStockProductsWidget;
-use App\Filament\Widgets\SalesChartWidget;
-use App\Filament\Widgets\StatsOverviewWidget;
+use App\Filament\Pages\Dashboard;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -39,10 +39,52 @@ class AdminPanelProvider extends PanelProvider
             ->path(config('cymarket.filament_path'))
             ->login()
             ->brandName('CY-Market Admin')
+            ->brandLogo(fn (): View => view('filament.brand'))
+            ->brandLogoHeight('2rem')
+            ->favicon(asset('favicon.ico'))
+            ->font('Plus Jakarta Sans')
+            // Brand green = the storefront's `brand` scale (resources/css/app.css),
+            // so both surfaces share one identity. 600 is the button/link shade
+            // (about 5:1 contrast on white).
             ->colors([
-                'primary' => Color::Emerald,
+                'primary' => [
+                    50 => '240, 253, 244',
+                    100 => '220, 252, 231',
+                    200 => '187, 247, 208',
+                    300 => '134, 239, 172',
+                    400 => '74, 222, 128',
+                    500 => '22, 163, 74',
+                    600 => '21, 128, 61',
+                    700 => '22, 101, 52',
+                    800 => '20, 83, 45',
+                    900 => '11, 56, 30',
+                    950 => '5, 35, 18',
+                ],
                 'danger' => Color::Rose,
                 'warning' => Color::Amber,
+                'info' => Color::Sky,
+            ])
+            ->maxContentWidth(MaxWidth::Full)
+            ->sidebarCollapsibleOnDesktop()
+            ->unsavedChangesAlerts()
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
+            ->globalSearchDebounce('500ms')
+            // Order follows the shop day: act on orders and money first, keep
+            // the catalogue right, promote, then report and administer. Names
+            // must match each resource's/page's $navigationGroup.
+            ->navigationGroups([
+                NavigationGroup::make('Operations'),
+                NavigationGroup::make('Catalogue'),
+                NavigationGroup::make('Marketing'),
+                NavigationGroup::make('Reports'),
+                NavigationGroup::make('Administration')->collapsed(),
+            ])
+            ->navigationItems([
+                NavigationItem::make('View shop')
+                    ->url('/', shouldOpenInNewTab: true)
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->group('Administration')
+                    ->sort(99),
             ])
             ->assets([
                 // Versioned by content hash: served as a plain static file, so
@@ -54,6 +96,19 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): View => view('filament.topbar-theme-switcher'),
             )
+            // Branded sign-in: a purpose line above the form, help below it.
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
+                fn (): View => view('filament.login-intro'),
+            )
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+                fn (): View => view('filament.login-help'),
+            )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): View => view('filament.sidebar-init'),
+            )
             // PWA - lets staff "install" the admin panel too, sharing the
             // storefront's manifest/service worker (see public/sw.js).
             ->renderHook(
@@ -63,18 +118,13 @@ class AdminPanelProvider extends PanelProvider
             // Staff bell - Super Admin/Inventory Officer get a NewOrderPlaced
             // alert the moment a customer checks out (see OrderService).
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s')
+            ->databaseNotificationsPolling('60s')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                StatsOverviewWidget::class,
-                SalesChartWidget::class,
-                LowStockProductsWidget::class,
-            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

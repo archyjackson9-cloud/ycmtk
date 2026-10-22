@@ -22,6 +22,8 @@ class BannerResource extends Resource
 
     protected static ?string $navigationGroup = 'Marketing';
 
+    protected static ?int $navigationSort = 0;
+
     public static function canViewAny(): bool
     {
         return auth()->user()?->hasAnyRole([

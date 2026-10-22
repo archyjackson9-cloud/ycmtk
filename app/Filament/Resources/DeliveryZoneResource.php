@@ -22,6 +22,8 @@ class DeliveryZoneResource extends Resource
 
     protected static ?string $navigationGroup = 'Administration';
 
+    protected static ?int $navigationSort = 2;
+
     public static function canViewAny(): bool
     {
         return auth()->user()?->isSuperAdmin() ?? false;

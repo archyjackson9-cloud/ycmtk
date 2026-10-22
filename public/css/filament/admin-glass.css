@@ -1,151 +1,255 @@
 /*
- * CY-Market admin panel — glassmorphism skin layered on top of Filament's
- * own compiled CSS (public/css/filament/filament/app.css). Registered via
- * AdminPanelProvider::panel()->assets() so it loads after Filament's core
- * styles and wins the cascade without needing to recompile Filament's
- * Tailwind v3 theme (this app's Tailwind v4 pipeline is unrelated).
- * Palette mirrors the storefront's emerald/amber brand tokens
- * (resources/css/app.css) for visual consistency across panels.
+ * CY-Market admin panel skin, layered on Filament's own compiled CSS
+ * (public/css/filament/filament/app.css). Registered through
+ * AdminPanelProvider::panel()->assets(), so it loads after Filament's core
+ * styles and wins the cascade without recompiling Filament's Tailwind v3
+ * theme (this app's Tailwind v4 storefront pipeline is unrelated).
+ *
+ * Design rules:
+ *  - Brand green is the storefront `brand` scale (resources/css/app.css);
+ *    the panel's primary colour is set to the same scale in
+ *    AdminPanelProvider, so most green comes from Filament itself.
+ *  - Content cards are SOLID. Blur is reserved for the top bar and modals,
+ *    and only on desktop-class devices (audit A-14): nested blur causes a
+ *    Chromium blank-content bug and is costly on mid-range phones.
+ *  - Utility classes are not available (Filament ships only the utilities it
+ *    uses), so custom views use the purpose-built `cy-*` classes below.
  */
 
 :root {
-    --fi-glass-bg: rgba(255, 255, 255, 0.68);
-    --fi-glass-bg-strong: rgba(255, 255, 255, 0.82);
-    --fi-glass-border: rgba(15, 23, 42, 0.08);
-    --fi-glass-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.12), 0 2px 8px -2px rgba(15, 23, 42, 0.06);
+    --cy-bg: #f4f7f5;
+    --cy-surface: #ffffff;
+    --cy-surface-2: #f8faf9;
+    --cy-border: rgba(15, 23, 42, 0.09);
+    --cy-text: #0f172a;
+    --cy-muted: #4b5563;
+    --cy-brand-50: #f0fdf4;
+    --cy-brand-100: #dcfce7;
+    --cy-brand-600: #15803d;
+    --cy-brand-700: #166534;
+    --cy-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px -6px rgba(15, 23, 42, 0.1);
+    --cy-radius: 0.875rem;
+
+    /* Legacy names still used by the report styles further down. */
+    --fi-glass-bg: var(--cy-surface);
+    --fi-glass-bg-strong: var(--cy-surface);
+    --fi-glass-border: var(--cy-border);
+    --fi-glass-shadow: var(--cy-shadow);
     --fi-brand-500: #16a34a;
     --fi-brand-600: #15803d;
     --fi-accent-500: #f59e0b;
 }
 
 .dark {
-    --fi-glass-bg: rgba(15, 23, 26, 0.62);
-    --fi-glass-bg-strong: rgba(17, 24, 27, 0.78);
-    --fi-glass-border: rgba(255, 255, 255, 0.08);
-    --fi-glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5), 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+    --cy-bg: #07100b;
+    --cy-surface: #0f1a14;
+    --cy-surface-2: #13211a;
+    --cy-border: rgba(255, 255, 255, 0.09);
+    --cy-text: #f1f5f2;
+    --cy-muted: #a7b3ab;
+    --cy-brand-50: rgba(22, 163, 74, 0.12);
+    --cy-brand-100: rgba(22, 163, 74, 0.2);
+    --cy-brand-600: #4ade80;
+    --cy-brand-700: #86efac;
+    --cy-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px -8px rgba(0, 0, 0, 0.6);
 }
 
-/* Ambient mesh backdrop behind the whole panel */
+/* Page background: flat tint with one soft brand glow, no fixed attachment */
 .fi-body {
-    background-color: #f8faf9 !important;
-    background-image:
-        radial-gradient(at 12% 8%, rgba(220, 252, 231, 0.75) 0px, transparent 45%),
-        radial-gradient(at 90% 12%, rgba(254, 243, 199, 0.5) 0px, transparent 45%),
-        radial-gradient(at 50% 100%, rgba(240, 253, 244, 0.9) 0px, transparent 55%) !important;
-    background-attachment: fixed;
+    background-color: var(--cy-bg) !important;
+    background-image: radial-gradient(ellipse 60rem 22rem at 0% 0%, rgba(22, 163, 74, 0.07), transparent 70%) !important;
 }
 
 .dark .fi-body {
-    background-color: #08110c !important;
-    background-image:
-        radial-gradient(at 15% 10%, rgba(21, 128, 61, 0.28) 0px, transparent 50%),
-        radial-gradient(at 85% 15%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
-        radial-gradient(at 50% 100%, rgba(5, 35, 18, 0.9) 0px, transparent 60%) !important;
-    background-attachment: fixed;
+    background-image: radial-gradient(ellipse 60rem 22rem at 0% 0%, rgba(22, 163, 74, 0.16), transparent 70%) !important;
 }
 
-/* Sidebar */
+/* ---------------------------------------------------------------- Sidebar */
 .fi-sidebar {
-    background: var(--fi-glass-bg) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-inline-end: 1px solid var(--fi-glass-border);
+    background: var(--cy-surface) !important;
+    border-inline-end: 1px solid var(--cy-border);
     box-shadow: none !important;
 }
 
 .fi-sidebar-header {
     background: transparent !important;
     box-shadow: none !important;
-    border-bottom: 1px solid var(--fi-glass-border);
+    border-bottom: 1px solid var(--cy-border);
+}
+
+.fi-sidebar-group-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .fi-sidebar-item-button {
-    border-radius: 0.75rem;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    border-radius: 0.625rem;
+    min-height: 2.5rem;
+    transition: background-color 0.15s ease;
 }
 
 .fi-sidebar-item.fi-active > .fi-sidebar-item-button {
-    background: linear-gradient(135deg, rgba(22, 163, 74, 0.14), rgba(245, 158, 11, 0.1)) !important;
-    box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.25);
+    background: var(--cy-brand-50) !important;
+    box-shadow: inset 3px 0 0 var(--fi-brand-500);
 }
 
-/* Topbar */
+.fi-sidebar-item.fi-active .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: var(--cy-brand-700) !important;
+}
+
+.dark .fi-sidebar-item.fi-active .fi-sidebar-item-label,
+.dark .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: #86efac !important;
+}
+
+.fi-sidebar-item-badge,
+.fi-sidebar-item .fi-badge {
+    font-weight: 700;
+}
+
+/* ----------------------------------------------------------------- Topbar */
 .fi-topbar > nav {
-    background: var(--fi-glass-bg) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--cy-surface) !important;
     box-shadow: none !important;
-    border-bottom: 1px solid var(--fi-glass-border);
+    border-bottom: 1px solid var(--cy-border);
 }
 
-/* Main content gutter — evenly spaced rhythm */
+/* ------------------------------------------------------------ Page layout */
 .fi-main {
-    padding-top: 2rem !important;
+    padding-top: 1.5rem !important;
     padding-bottom: 3rem !important;
 }
 
 .fi-page {
-    row-gap: 1.75rem;
+    row-gap: 1.5rem;
 }
 
 .fi-header-heading {
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
+    font-weight: 800;
 }
 
-/* Cards: stats, tables, sections. Note: deliberately excludes `.fi-wi`
-   (the outer widgets grid) — nested backdrop-filter blur on both an
-   ancestor and its child card causes headless Chromium to composite the
-   child's content as blank white, so only leaf-level cards get the blur. */
+.fi-header-subheading {
+    color: var(--cy-muted);
+}
+
+/* Header buttons wrap instead of overflowing on narrow screens */
+.fi-header-actions-ctn,
+.fi-header {
+    flex-wrap: wrap;
+}
+
+.fi-header-actions-ctn {
+    gap: 0.5rem;
+}
+
+/* ------------------------------------------------------------------ Cards */
 .fi-wi-stats-overview-stat,
 .fi-ta-ctn,
 .fi-section,
-.fi-in-ctn {
-    background: var(--fi-glass-bg-strong) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--fi-glass-border) !important;
-    box-shadow: var(--fi-glass-shadow) !important;
-    border-radius: 1rem !important;
+.fi-in-ctn,
+.fi-wi-chart {
+    background: var(--cy-surface) !important;
+    border: 1px solid var(--cy-border) !important;
+    box-shadow: var(--cy-shadow) !important;
+    border-radius: var(--cy-radius) !important;
+    --tw-ring-shadow: 0 0 #0000;
+}
+
+/* A section nested in a section (e.g. infolist grid) stays flat */
+.fi-section .fi-section {
+    box-shadow: none !important;
+}
+
+/* KPI tiles: responsive grid, big numbers, tappable when linked */
+.fi-wi-stats-overview-stats-ctn {
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)) !important;
+    gap: 0.875rem !important;
 }
 
 .fi-wi-stats-overview-stat {
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.fi-wi-stats-overview-stat:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 34px -14px rgba(15, 23, 42, 0.18), 0 4px 10px -4px rgba(15, 23, 42, 0.08) !important;
+a.fi-wi-stats-overview-stat:hover,
+a > .fi-wi-stats-overview-stat:hover {
+    border-color: rgba(22, 163, 74, 0.45) !important;
 }
 
-.fi-wi-stats-overview-stats {
-    gap: 1.25rem !important;
+.fi-wi-stats-overview-stat-value {
+    font-size: 1.6rem !important;
+    line-height: 2rem !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
 }
 
-/* Table rows: subtle translucency instead of flat white */
+/* ----------------------------------------------------------------- Tables */
+.fi-ta-header-cell {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .fi-ta-row {
     background: transparent !important;
 }
 
 .fi-ta-row:hover {
-    background: rgba(22, 163, 74, 0.05) !important;
+    background: var(--cy-brand-50) !important;
 }
 
-/* Primary buttons get the brand glow */
-.fi-btn.fi-color-primary,
-.fi-ac-btn-action.fi-color-primary {
-    box-shadow: 0 6px 18px -6px rgba(22, 163, 74, 0.45) !important;
+.fi-ta-text-item-label {
+    overflow-wrap: anywhere;
 }
 
-/* Modals and dropdowns: same glass language */
+/* Status tabs above list tables: scroll sideways rather than wrap */
+.fi-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.fi-tabs-item {
+    white-space: nowrap;
+    min-height: 2.5rem;
+}
+
+/* Empty states */
+.fi-ta-empty-state-heading {
+    font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- Buttons */
+.fi-btn {
+    min-height: 2.5rem;
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined) {
+    box-shadow: 0 1px 2px rgba(21, 128, 61, 0.35);
+}
+
+/* Visible keyboard focus everywhere (accessibility) */
+.fi-body :focus-visible {
+    outline: 2px solid var(--fi-brand-600);
+    outline-offset: 2px;
+}
+
+.dark .fi-body :focus-visible {
+    outline-color: #4ade80;
+}
+
+/* ------------------------------------------------- Modals and dropdowns */
 .fi-modal-window,
 .fi-dropdown-panel {
-    background: var(--fi-glass-bg-strong) !important;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--fi-glass-border) !important;
+    background: var(--cy-surface) !important;
+    border: 1px solid var(--cy-border) !important;
+    box-shadow: 0 24px 48px -16px rgba(15, 23, 42, 0.28) !important;
 }
 
-/* Slimmer, quieter scrollbars inside the glass sidebar */
+/* Slimmer, quieter scrollbars inside the sidebar */
 .fi-sidebar-nav::-webkit-scrollbar {
     width: 6px;
 }
@@ -153,6 +257,389 @@
 .fi-sidebar-nav::-webkit-scrollbar-thumb {
     background: rgba(22, 163, 74, 0.25);
     border-radius: 999px;
+}
+
+/* ------------------------------------------------------------ Brand mark */
+.cy-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.cy-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    color: #fff;
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    box-shadow: 0 4px 10px -4px rgba(21, 128, 61, 0.6);
+    flex: none;
+}
+
+.cy-brand-text {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--cy-text);
+    white-space: nowrap;
+}
+
+.cy-brand-tag {
+    margin-left: 0.2rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cy-brand-700);
+    background: var(--cy-brand-100);
+    vertical-align: 0.12em;
+}
+
+/* Collapsed desktop sidebar: keep only the mark */
+.fi-sidebar:not(.fi-sidebar-open) .cy-brand-text {
+    display: none;
+}
+
+/* --------------------------------------------------------------- Sign-in */
+.fi-simple-layout {
+    background-color: var(--cy-bg);
+    background-image:
+        radial-gradient(ellipse 50rem 26rem at 50% -8%, rgba(22, 163, 74, 0.22), transparent 70%),
+        radial-gradient(ellipse 40rem 20rem at 100% 100%, rgba(245, 158, 11, 0.1), transparent 70%);
+}
+
+.fi-simple-main {
+    border: 1px solid var(--cy-border);
+    border-radius: 1.25rem !important;
+    box-shadow: 0 24px 48px -24px rgba(15, 23, 42, 0.25) !important;
+}
+
+.cy-login-intro {
+    margin-top: -0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--cy-muted);
+}
+
+.cy-login-help {
+    margin-top: 0.25rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--cy-muted);
+}
+
+/* ------------------------------------------------- Dashboard: worklist */
+.cy-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.cy-task {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--cy-border);
+    border-radius: 0.75rem;
+    background: var(--cy-surface-2);
+    text-decoration: none;
+    color: inherit;
+    min-height: 3.5rem;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.cy-task:hover {
+    border-color: rgba(22, 163, 74, 0.5);
+    background: var(--cy-brand-50);
+}
+
+.cy-task-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.6rem;
+    flex: none;
+}
+
+.cy-task-svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.cy-task-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.cy-task-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--cy-text);
+}
+
+.cy-task-hint {
+    font-size: 0.78rem;
+    line-height: 1.3;
+    color: var(--cy-muted);
+}
+
+.cy-task-count {
+    min-width: 2rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.cy-task-chevron {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--cy-muted);
+    flex: none;
+}
+
+/* Colour tones (icon chips + count pills). Dark text on light tint = AA. */
+.cy-tone-warning { background: #fef3c7; color: #92400e; }
+.cy-tone-danger { background: #ffe4e6; color: #9f1239; }
+.cy-tone-info { background: #e0f2fe; color: #075985; }
+.cy-tone-primary { background: #dcfce7; color: #166534; }
+.cy-tone-success { background: #dcfce7; color: #166534; }
+.cy-tone-gray { background: #f1f5f9; color: #334155; }
+
+.dark .cy-tone-warning { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+.dark .cy-tone-danger { background: rgba(244, 63, 94, 0.18); color: #fda4af; }
+.dark .cy-tone-info { background: rgba(14, 165, 233, 0.18); color: #7dd3fc; }
+.dark .cy-tone-primary,
+.dark .cy-tone-success { background: rgba(22, 163, 74, 0.2); color: #86efac; }
+.dark .cy-tone-gray { background: rgba(148, 163, 184, 0.16); color: #cbd5e1; }
+
+.cy-allclear {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: var(--cy-brand-50);
+}
+
+.cy-allclear-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--fi-brand-500);
+    flex: none;
+}
+
+.cy-allclear-title {
+    font-weight: 700;
+    color: var(--cy-text);
+}
+
+.cy-allclear-text {
+    font-size: 0.85rem;
+    color: var(--cy-muted);
+}
+
+.cy-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0.6rem;
+}
+
+.cy-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.85rem;
+    min-height: 2.75rem;
+    border: 1px solid var(--cy-border);
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--cy-text);
+    text-decoration: none;
+    background: var(--cy-surface);
+}
+
+.cy-shortcut:hover {
+    border-color: rgba(22, 163, 74, 0.5);
+    background: var(--cy-brand-50);
+}
+
+.cy-shortcut-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--fi-brand-600);
+}
+
+.cy-two-col {
+    display: grid;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .cy-two-col {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* --------------------------------------------- Order page: progress bar */
+.cy-timeline-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.cy-timeline {
+    display: flex;
+    gap: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+}
+
+.cy-step {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 5.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    text-align: center;
+}
+
+/* connector line between dots */
+.cy-step::before {
+    content: '';
+    position: absolute;
+    top: 0.7rem;
+    left: -50%;
+    width: 100%;
+    height: 3px;
+    background: rgba(148, 163, 184, 0.45);
+}
+
+.cy-step:first-child::before {
+    display: none;
+}
+
+.cy-step-done::before,
+.cy-step-current::before {
+    background: var(--fi-brand-500);
+}
+
+.cy-step-dot {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    border: 3px solid rgba(148, 163, 184, 0.55);
+    background: var(--cy-surface);
+    color: #fff;
+}
+
+.cy-step-done .cy-step-dot {
+    background: var(--fi-brand-500);
+    border-color: var(--fi-brand-500);
+}
+
+.cy-step-current .cy-step-dot {
+    border-color: var(--fi-brand-500);
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.2);
+}
+
+.cy-step-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--cy-text);
+}
+
+.cy-step-upcoming .cy-step-label {
+    color: var(--cy-muted);
+    font-weight: 600;
+}
+
+.cy-step-time {
+    font-size: 0.7rem;
+    color: var(--cy-muted);
+    min-height: 1rem;
+}
+
+.cy-banner {
+    padding: 0.65rem 0.9rem;
+    border-radius: 0.65rem;
+    font-size: 0.875rem;
+}
+
+.cy-banner-danger { background: #ffe4e6; color: #9f1239; }
+.cy-banner-warning { background: #fef3c7; color: #92400e; }
+.dark .cy-banner-danger { background: rgba(244, 63, 94, 0.16); color: #fda4af; }
+.dark .cy-banner-warning { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+
+/* ----------------------------------------- Payments: proof preview modal */
+.cy-proof {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.cy-proof-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.cy-proof-facts dt {
+    font-size: 0.75rem;
+    color: var(--cy-muted);
+}
+
+.cy-proof-facts dd {
+    margin: 0;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.cy-proof-img {
+    display: block;
+    max-width: 100%;
+    max-height: 60vh;
+    margin: 0 auto;
+    border-radius: 0.75rem;
+    border: 1px solid var(--cy-border);
+    object-fit: contain;
+}
+
+.cy-proof-open {
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.cy-proof-open a,
+.cy-proof-facts a {
+    color: var(--fi-brand-600);
+    text-decoration: underline;
 }
 
 /*
@@ -345,8 +832,6 @@
     border-radius: 1.25rem;
     text-decoration: none;
     background: var(--fi-glass-bg-strong);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
     box-shadow: var(--fi-glass-shadow);
     border: 1px solid var(--fi-glass-border);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -449,32 +934,35 @@
 }
 
 /* ==========================================================================
-   Phones / touch: cheaper rendering and tighter spacing (desktop unchanged)
+   Desktop-class devices only: light blur on the top bar and modal backdrop.
+   Skipped on touch/small screens and when the user asks for less transparency.
    ========================================================================== */
-@media (max-width: 1023px), (hover: none) {
-    .fi-body,
-    .dark .fi-body {
-        background-attachment: scroll;
+@media (min-width: 1024px) and (hover: hover) {
+    .fi-topbar > nav {
+        background: color-mix(in srgb, var(--cy-surface) 78%, transparent) !important;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
     }
 
-    .fi-sidebar,
-    .fi-topbar > nav,
-    .fi-wi-stats-overview-stat,
-    .fi-ta-ctn,
-    .fi-section,
-    .fi-in-ctn {
+    a.fi-wi-stats-overview-stat:hover,
+    .cy-report-card:hover {
+        transform: translateY(-2px);
+    }
+}
+
+/* ==========================================================================
+   Phones / tablets: tighter spacing, scrolling tables, 16px fields
+   ========================================================================== */
+@media (max-width: 1023px) {
+    .cy-report-card {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
-    }
-
-    .fi-wi-stats-overview-stat:hover {
-        transform: none;
     }
 }
 
 @media (max-width: 639px) {
     .fi-main {
-        padding-top: 1rem !important;
+        padding-top: 0.75rem !important;
         padding-bottom: 1.5rem !important;
     }
 
@@ -483,12 +971,21 @@
     }
 
     .fi-header-heading {
-        font-size: 1.25rem;
+        font-size: 1.35rem;
         line-height: 1.75rem;
     }
 
-    .fi-wi-stats-overview-stats {
-        gap: 0.75rem !important;
+    .fi-wi-stats-overview-stats-ctn {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.6rem !important;
+    }
+
+    .fi-wi-stats-overview-stat {
+        padding: 0.85rem !important;
+    }
+
+    .fi-wi-stats-overview-stat-value {
+        font-size: 1.3rem !important;
     }
 
     .fi-section,
@@ -510,10 +1007,32 @@
     .fi-fo-textarea textarea {
         font-size: 16px !important;
     }
+
+    .cy-task-hint {
+        display: none;
+    }
+
+    .cy-timeline {
+        padding-bottom: 0.25rem;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .fi-topbar > nav,
+    .fi-modal-window,
+    .fi-dropdown-panel,
+    .cy-report-card {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .fi-wi-stats-overview-stat {
-        transition: none;
+    .fi-wi-stats-overview-stat,
+    .cy-task,
+    .cy-report-card,
+    .fi-sidebar-item-button {
+        transition: none !important;
+        transform: none !important;
     }
 }

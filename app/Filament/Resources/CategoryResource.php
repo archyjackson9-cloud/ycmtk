@@ -23,7 +23,7 @@ class CategoryResource extends Resource
 
     protected static ?string $navigationGroup = 'Catalogue';
 
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort = 1;
 
     public static function canViewAny(): bool
     {

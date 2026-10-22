@@ -27,7 +27,16 @@ class CustomerResource extends Resource
 
     protected static ?string $modelLabel = 'customer';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static ?string $navigationGroup = 'Operations';
+
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email', 'phone'];
+    }
 
     public static function canViewAny(): bool
     {

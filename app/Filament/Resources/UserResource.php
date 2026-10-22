@@ -30,6 +30,8 @@ class UserResource extends Resource
 
     protected static ?string $navigationGroup = 'Administration';
 
+    protected static ?int $navigationSort = 1;
+
     public static function canViewAny(): bool
     {
         return auth()->user()?->isSuperAdmin() ?? false;

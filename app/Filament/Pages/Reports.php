@@ -23,7 +23,7 @@ class Reports extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar-square';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static ?string $navigationGroup = 'Reports';
 
     protected static ?int $navigationSort = 1;
 

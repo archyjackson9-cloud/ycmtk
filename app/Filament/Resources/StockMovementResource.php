@@ -27,7 +27,7 @@ class StockMovementResource extends Resource
 
     protected static ?string $navigationGroup = 'Catalogue';
 
-    protected static ?string $navigationLabel = 'Stock Movements';
+    protected static ?string $navigationLabel = 'Stock movements';
 
     protected static ?int $navigationSort = 2;
 
@@ -63,6 +63,8 @@ class StockMovementResource extends Resource
                 ->numeric()
                 ->integer()
                 ->required()
+                ->notIn([0])
+                ->validationMessages(['not_in' => 'Enter a quantity other than zero.'])
                 ->helperText('Positive to add stock (new harvest/delivery), negative to remove it (spoilage, write-off, correction).'),
             Forms\Components\Textarea::make('note')
                 ->label('Reason')
@@ -86,6 +88,10 @@ class StockMovementResource extends Resource
                 Tables\Filters\SelectFilter::make('product_id')->label('Product')->options(fn () => Product::pluck('name', 'id')),
                 Tables\Filters\SelectFilter::make('type')->options(collect(StockMovementType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->label()])),
             ])
+            ->emptyStateIcon('heroicon-o-archive-box')
+            ->emptyStateHeading('No stock movements yet')
+            ->emptyStateDescription('Every change to stock - new harvest, spoilage, corrections - is recorded here.')
+            ->striped()
             ->defaultSort('created_at', 'desc');
     }
 

@@ -23,6 +23,8 @@ class NotificationLogResource extends Resource
 
     protected static ?string $navigationGroup = 'Administration';
 
+    protected static ?int $navigationSort = 3;
+
     protected static ?string $navigationLabel = 'Notification Logs';
 
     protected static ?string $modelLabel = 'Notification Log';
