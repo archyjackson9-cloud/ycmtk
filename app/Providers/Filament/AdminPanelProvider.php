@@ -41,7 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('CY-Market Admin')
             ->brandLogo(fn (): View => view('filament.brand'))
             ->brandLogoHeight('2rem')
-            ->favicon(asset('favicon.ico'))
+            ->favicon('/favicon.ico')
             ->font('Plus Jakarta Sans')
             // Brand green = the storefront's `brand` scale (resources/css/app.css),
             // so both surfaces share one identity. 600 is the button/link shade
@@ -90,7 +90,10 @@ class AdminPanelProvider extends PanelProvider
                 // Versioned by content hash: served as a plain static file, so
                 // without a changing query string browsers/CDNs keep a stale copy
                 // lacking newer classes (e.g. the .cy-report-* hub cards).
-                Css::make('admin-glass-theme', asset('css/filament/admin-glass.css').'?v='.substr((string) md5_file(public_path('css/filament/admin-glass.css')), 0, 12)),
+                // Root-relative on purpose: asset() here runs at provider boot,
+                // before trustProxies marks the request https, so behind Caddy
+                // it emitted http:// and browsers blocked it as mixed content.
+                Css::make('admin-glass-theme', '/css/filament/admin-glass.css?v='.substr((string) md5_file(public_path('css/filament/admin-glass.css')), 0, 12)),
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
