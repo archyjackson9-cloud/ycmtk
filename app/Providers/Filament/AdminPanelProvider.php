@@ -90,10 +90,14 @@ class AdminPanelProvider extends PanelProvider
                 // Versioned by content hash: served as a plain static file, so
                 // without a changing query string browsers/CDNs keep a stale copy
                 // lacking newer classes (e.g. the .cy-report-* hub cards).
-                // Root-relative on purpose: asset() here runs at provider boot,
-                // before trustProxies marks the request https, so behind Caddy
-                // it emitted http:// and browsers blocked it as mixed content.
-                Css::make('admin-glass-theme', '/css/filament/admin-glass.css?v='.substr((string) md5_file(public_path('css/filament/admin-glass.css')), 0, 12)),
+                // Raw <link> with a root-relative href on purpose: asset() at
+                // provider boot runs before trustProxies marks the request
+                // https, so behind Caddy it emitted http:// (mixed content),
+                // and Filament rewrites non-absolute paths to css/app/<id>.css.
+                Css::make('admin-glass-theme', 'css/filament/admin-glass.css')
+                    ->html(fn (): string => '<link href="/css/filament/admin-glass.css?v='
+                        .substr((string) md5_file(public_path('css/filament/admin-glass.css')), 0, 12)
+                        .'" rel="stylesheet" data-navigate-track />'),
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
