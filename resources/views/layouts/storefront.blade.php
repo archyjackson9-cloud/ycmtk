@@ -88,7 +88,7 @@
             <div class="flex items-center gap-1.5 sm:gap-3 shrink-0 text-sm">
                 @auth
                     {{-- Notification Bell - order-tracking updates for registered customers --}}
-                    <div class="relative">
+                    <div class="sm:relative">
                         <button type="button" id="notif-bell-toggle" aria-label="Notifications" aria-expanded="false"
                                 class="relative inline-flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -98,7 +98,7 @@
                                 </span>
                             @endif
                         </button>
-                        <div id="notif-bell-panel" class="hidden fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-[4.25rem] sm:top-auto sm:mt-2 sm:w-80 sm:max-w-[90vw] liquid-glass rounded-2xl shadow-lg overflow-hidden z-50">
+                        <div id="notif-bell-panel" class="hidden absolute left-2 right-2 top-full mt-2 sm:left-auto sm:right-0 sm:w-80 sm:max-w-[90vw] bg-white/95 backdrop-blur-xl ring-1 ring-black/5 rounded-2xl shadow-lg overflow-hidden z-50">
                             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                 <span class="text-xs font-extrabold uppercase tracking-wider text-gray-700">Notifications</span>
                                 @if(($unreadNotificationCount ?? 0) > 0)
