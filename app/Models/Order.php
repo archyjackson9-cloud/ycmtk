@@ -122,7 +122,7 @@ class Order extends Model
         return $this->user?->name ?? $this->guest_name ?? 'Guest';
     }
 
-    public function customerPhone(): string
+    public function customerPhone(): ?string
     {
         return $this->user?->phone ?? $this->guest_phone ?? $this->delivery_phone;
     }

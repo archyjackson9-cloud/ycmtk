@@ -108,7 +108,7 @@ class OrderService
                 $this->stock->releaseForOrder($order, 'Payment attempt failed.');
             }
 
-            $this->notify($order, OrderEventType::PaymentFailed);
+            $this->notify($order, OrderEventType::PaymentFailed, "sms:payment_failed:{$payment->id}");
             $this->email->queuePaymentFailed($order, $payment);
 
             return $order->fresh();
@@ -146,8 +146,15 @@ class OrderService
                 OrderStatus::Processing => OrderEventType::OrderProcessing,
                 OrderStatus::Dispatched => OrderEventType::OrderDispatched,
                 OrderStatus::Delivered => OrderEventType::OrderDelivered,
+                OrderStatus::OnHold => OrderEventType::OrderOnHold,
                 default => null,
             };
+
+            // Staff put an order on hold by hand: the note is the reason the
+            // customer reads in the SMS/email.
+            if ($status === OrderStatus::OnHold && filled($note) && blank($order->on_hold_reason)) {
+                $order->update(['on_hold_reason' => $note]);
+            }
 
             if ($event) {
                 $this->notify($order->fresh(), $event);
@@ -249,7 +256,7 @@ class OrderService
         $phone = app(SettingsService::class)->get('internal_alert_phone');
 
         if ($phone) {
-            $this->sms->send($phone, $message, OrderEventType::OrderOnHold, $order);
+            $this->sms->send($phone, $message, OrderEventType::OrderOnHold, $order, "sms:staff_on_hold:{$order->id}");
         }
 
         Log::warning($message, ['order_id' => $order->id]);
@@ -263,12 +270,25 @@ class OrderService
      * by transition() (status changes), notifyPlaced() and
      * markPaymentFailed() so they are tied to what actually happened.
      */
-    protected function notify(Order $order, OrderEventType $event): void
+    protected function notify(Order $order, OrderEventType $event, ?string $dedupeKey = null): void
     {
-        $this->sms->sendOrderEvent($order, $event);
+        $this->sms->sendOrderEvent($order, $event, dedupeKey: $dedupeKey ?? $this->defaultSmsKey($order, $event));
 
         // Guests have no account to show a bell in.
         $order->user?->notify(new OrderStatusUpdated($order, $event));
+    }
+
+    /**
+     * One SMS per order per one-off event, so replayed webhooks, retried
+     * requests or double clicks can never text the customer twice. Processing
+     * and On Hold can legitimately recur (hold -> resume), so they are not keyed.
+     */
+    protected function defaultSmsKey(Order $order, OrderEventType $event): ?string
+    {
+        return match ($event) {
+            OrderEventType::OrderProcessing, OrderEventType::OrderOnHold, OrderEventType::PaymentFailed => null,
+            default => 'sms:'.$event->value.':'.$order->id,
+        };
     }
 
     /**

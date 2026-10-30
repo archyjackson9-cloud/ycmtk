@@ -5,101 +5,196 @@ namespace App\Services\Notifications;
 use App\Enums\NotificationChannel;
 use App\Enums\NotificationStatus;
 use App\Enums\OrderEventType;
+use App\Jobs\SendSms;
 use App\Models\NotificationLog;
 use App\Models\Order;
 use App\Services\SettingsService;
+use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Notification Service (TOR §5.2, §6.6). Every mandatory order-lifecycle
- * SMS trigger from §6.6 goes through sendOrderEvent(). In "log" mode
- * (default, see config/sms.php) messages are written to storage/logs
- * instead of a live gateway so the whole flow is testable with zero
- * credentials; in "live" mode they are POSTed to the configured gateway
- * with a retry policy (TOR §11 "SMS delivery failure").
+ * SMS trigger from §6.6 goes through sendOrderEvent(), and admin custom
+ * messages through queue(). Nothing is sent inline: each call records a
+ * pending NotificationLog row and queues a SendSms job (after the
+ * surrounding transaction commits), so a slow or failing gateway never
+ * blocks checkout or an admin status change. The job retries with backoff
+ * (TOR §11 "SMS delivery failure") and the log row keeps attempts/outcome.
+ *
+ * In "log" mode (default, see config/sms.php) messages are written to
+ * storage/logs instead of Arkesel so the whole flow is testable with zero
+ * credentials; in "live" mode they are POSTed to the Arkesel v2 API.
+ * Requires a running queue worker in production when QUEUE_CONNECTION is
+ * not "sync".
  */
 class SmsNotificationService implements SmsGatewayInterface
 {
+    /** NotificationLog.type used for admin-written (non order-event) SMS. */
+    public const TYPE_CUSTOM = 'custom';
+
     public function __construct(protected SettingsService $settings) {}
 
-    public function sendOrderEvent(Order $order, OrderEventType $event, ?string $overridePhone = null): NotificationLog
+    /**
+     * Returns null when an SMS with the same dedupe key was already recorded
+     * (webhook replays etc. must not text the customer twice).
+     */
+    public function sendOrderEvent(Order $order, OrderEventType $event, ?string $overridePhone = null, ?string $dedupeKey = null): ?NotificationLog
     {
         $phone = $overridePhone ?? $order->customerPhone();
         $message = $this->buildMessage($order, $event);
 
-        return $this->send($phone, $message, $event, $order);
+        return $this->send($phone, $message, $event, $order, $dedupeKey);
     }
 
-    public function send(string $to, string $message, OrderEventType $type, ?Model $notifiable = null): NotificationLog
+    /**
+     * Records the SMS and queues its delivery. A missing/invalid phone number
+     * is logged as Failed (never an exception, never a job).
+     */
+    public function send(?string $to, string $message, OrderEventType|string $type, ?Model $notifiable = null, ?string $dedupeKey = null): ?NotificationLog
     {
-        $log = NotificationLog::create([
-            'notifiable_type' => $notifiable?->getMorphClass(),
-            'notifiable_id' => $notifiable?->getKey(),
-            'channel' => NotificationChannel::Sms,
-            'type' => $type->value,
-            'recipient' => $to,
-            'message' => $message,
-            'status' => NotificationStatus::Pending,
-            'attempts' => 0,
-        ]);
+        $log = $this->record($to, $message, $type, $notifiable, $dedupeKey);
 
-        $this->attemptDelivery($log);
-
-        return $log->fresh();
-    }
-
-    protected function attemptDelivery(NotificationLog $log): void
-    {
-        $maxAttempts = max(1, (int) config('sms.retry_attempts', 3));
-
-        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-            $log->increment('attempts');
-
-            [$success, $response] = $this->sendRaw($log->recipient, $log->message);
-
-            if ($success) {
-                $log->update([
-                    'status' => NotificationStatus::Sent,
-                    'provider_response' => $response,
-                    'sent_at' => now(),
-                ]);
-
-                return;
-            }
+        if ($log && $log->status === NotificationStatus::Pending) {
+            $this->queue([$log]);
         }
 
-        // All retries exhausted (TOR §11 "SMS delivery failure -> Retry
-        // mechanism (configurable attempts). Failed SMS logged; Super Admin
-        // can view undelivered notifications").
-        $log->update([
-            'status' => NotificationStatus::Failed,
-            'provider_response' => $response ?? 'No response from gateway',
-        ]);
+        return $log;
+    }
+
+    /**
+     * Creates the log row without queueing it (broadcasts record many rows
+     * and then queue them in chunks).
+     */
+    public function record(?string $to, string $message, OrderEventType|string $type, ?Model $notifiable = null, ?string $dedupeKey = null): ?NotificationLog
+    {
+        if ($dedupeKey && NotificationLog::where('dedupe_key', $dedupeKey)->exists()) {
+            return null;
+        }
+
+        $number = PhoneNumber::toArkesel($to);
+
+        try {
+            return NotificationLog::create([
+                'notifiable_type' => $notifiable?->getMorphClass(),
+                'notifiable_id' => $notifiable?->getKey(),
+                'channel' => NotificationChannel::Sms,
+                'type' => $type instanceof OrderEventType ? $type->value : $type,
+                'dedupe_key' => $dedupeKey,
+                'recipient' => $number ?? (string) $to,
+                'message' => $message,
+                'status' => $number ? NotificationStatus::Pending : NotificationStatus::Failed,
+                'provider_response' => $number ? null : 'No valid Ghana phone number - SMS not sent.',
+                'attempts' => 0,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return null; // lost a race with an identical concurrent request
+        }
+    }
+
+    /**
+     * Queues one SendSms job for the given pending log rows, once the current
+     * transaction (if any) has committed. A queue outage must never turn an
+     * already-committed order into an error page, so it only marks the rows
+     * Failed.
+     *
+     * @param  iterable<int, NotificationLog>  $logs
+     */
+    public function queue(iterable $logs): void
+    {
+        $ids = collect($logs)->pluck('id')->all();
+
+        if ($ids === []) {
+            return;
+        }
+
+        DB::afterCommit(function () use ($ids) {
+            try {
+                SendSms::dispatch($ids);
+            } catch (\Throwable $e) {
+                // With QUEUE_CONNECTION=sync the job's own failure surfaces here
+                // (failed() already marked the rows); otherwise the dispatch failed.
+                Log::channel('sms')->error('SMS job failed or could not be queued', ['logs' => $ids, 'error' => $e->getMessage()]);
+
+                NotificationLog::whereIn('id', $ids)
+                    ->where('status', NotificationStatus::Pending)
+                    ->update(['status' => NotificationStatus::Failed, 'provider_response' => 'Could not queue: '.$e->getMessage()]);
+            }
+        });
+    }
+
+    /**
+     * One delivery attempt for pending log rows (called by the SendSms job).
+     * Rows sharing the same text go out in a single gateway request. Rows
+     * that succeed become Sent; the rest stay Pending with the provider's
+     * answer so the job can retry them. Returns true when all were accepted.
+     *
+     * @param  Collection<int, NotificationLog>  $logs
+     */
+    public function deliver(Collection $logs): bool
+    {
+        $allOk = true;
+
+        foreach ($logs->groupBy('message') as $message => $group) {
+            $group->each(fn (NotificationLog $log) => $log->increment('attempts'));
+
+            $recipients = $group->pluck('recipient')->unique()->values()->all();
+
+            [$success, $response] = count($recipients) === 1
+                ? $this->sendRaw($recipients[0], (string) $message)
+                : $this->sendBulk($recipients, (string) $message);
+
+            foreach ($group as $log) {
+                $log->update($success
+                    ? ['status' => NotificationStatus::Sent, 'provider_response' => $response, 'sent_at' => now()]
+                    : ['provider_response' => $response]);
+            }
+
+            $allOk = $allOk && $success;
+        }
+
+        return $allOk;
     }
 
     public function sendRaw(string $to, string $message): array
     {
+        return $this->sendBulk([$to], $message);
+    }
+
+    public function sendBulk(array $recipients, string $message): array
+    {
         if (config('sms.mode', 'log') !== 'live') {
-            Log::channel('sms')->info('SMS (sandbox/log mode)', ['to' => $to, 'message' => $message]);
+            Log::channel('sms')->info('SMS (sandbox/log mode)', ['to' => $recipients, 'message' => $message]);
 
             return [true, 'log-mode: simulated delivery'];
         }
 
+        if (blank(config('sms.api_key'))) {
+            return [false, 'SMS_ARKESEL_API_KEY is not configured.'];
+        }
+
         try {
             $response = Http::timeout((int) config('sms.timeout', 15))
-                ->withToken(config('sms.api_key'))
-                ->post(rtrim((string) config('sms.base_url'), '/').'/send', [
-                    'client_id' => config('sms.client_id'),
-                    'sender_id' => config('sms.sender_id'),
-                    'to' => $to,
+                ->withHeaders(['api-key' => (string) config('sms.api_key')])
+                ->acceptJson()
+                ->asJson()
+                ->post(rtrim((string) config('sms.base_url'), '/').'/sms/send', [
+                    'sender' => config('sms.sender_id'),
                     'message' => $message,
+                    'recipients' => array_values($recipients),
                 ]);
 
-            return [$response->successful(), $response->body()];
+            // Arkesel can answer HTTP 200 with an error body, so the JSON
+            // "status" has to be checked as well.
+            $ok = $response->successful() && $response->json('status') === 'success';
+
+            return [$ok, $response->body()];
         } catch (\Throwable $e) {
-            Log::channel('sms')->error('SMS send failed', ['to' => $to, 'error' => $e->getMessage()]);
+            Log::channel('sms')->error('SMS send failed', ['to' => $recipients, 'error' => $e->getMessage()]);
 
             return [false, $e->getMessage()];
         }

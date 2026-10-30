@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Enums\NotificationChannel;
 use App\Enums\NotificationStatus;
+use App\Enums\OrderEventType;
 use App\Filament\Resources\NotificationLogResource\Pages;
 use App\Models\NotificationLog;
+use App\Services\Notifications\SmsNotificationService;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -59,7 +61,8 @@ class NotificationLogResource extends Resource
                 Tables\Columns\TextColumn::make('channel')
                     ->badge()
                     ->formatStateUsing(fn (NotificationChannel $state) => $state->label()),
-                Tables\Columns\TextColumn::make('type')->label('Event')->searchable(),
+                Tables\Columns\TextColumn::make('type')->label('Event')->searchable()
+                    ->formatStateUsing(fn (string $state) => $state === SmsNotificationService::TYPE_CUSTOM ? 'Custom SMS' : (OrderEventType::tryFrom($state)?->label() ?? $state)),
                 Tables\Columns\TextColumn::make('recipient')->searchable(),
                 Tables\Columns\TextColumn::make('message')->limit(50)->wrap(),
                 Tables\Columns\TextColumn::make('status')
@@ -82,6 +85,9 @@ class NotificationLogResource extends Resource
                         'delivered' => 'Delivered',
                         'failed' => 'Failed',
                     ]),
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('Event')
+                    ->options(['custom' => 'Custom SMS'] + collect(OrderEventType::cases())->mapWithKeys(fn (OrderEventType $e) => [$e->value => $e->label()])->all()),
             ]);
     }
 
